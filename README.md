@@ -1,2 +1,2 @@
-# lambda-note
-λnote: a simple, highly extendable, markup language
+# λnote
+A simple, highly extendable, markup language
