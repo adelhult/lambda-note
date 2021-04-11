@@ -34,6 +34,13 @@ x^2 + 3z \cdot \Lambda
 Inline extension might look something like this
 | math, x^2 + 3z |
 
-TODO: decide the syntax for lists and all other
-inline elements.
+/Italic/
+*Bold*
+_underlined_
++strikethrough+
+Perhaps ^superscript^ as well, or maybe autoconvert stuff like this:
+x^2 x_y but that creates problems/additional complexity if you would wish to include whitespace
+in your superscripted text
+
+TODO: lists
 ```
