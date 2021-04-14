@@ -36,11 +36,10 @@ Inline extension might look something like this
 
 /Italic/
 *Bold*
-_underlined_
+=underlined=
 +strikethrough+
-Perhaps ^superscript^ as well, or maybe autoconvert stuff like this:
-x^2 x_y but that creates problems/additional complexity if you would wish to include whitespace
-in your superscripted text
+^superscript^
+_subscript_
 
 TODO: lists
 ```
