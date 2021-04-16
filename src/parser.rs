@@ -38,10 +38,8 @@ pub fn parse_doc(source: &str) -> (Vec<Block>, Metadata) {
             blocks.append(&mut consume_text_buffer(&mut text));
         }
 
-        break;
+        break (blocks, metadata);
     }
-
-    (blocks, metadata)
 }
 
 /// Returns the next block and consumes the corresponding lines
@@ -92,37 +90,8 @@ fn parse_extension(lines: &mut Lines) -> Option<Block> {
 
     let line = lines.peek()?;
     let captures = EXTENSION_RULE.captures(line)?;
+    let arguments = parse_arguments(&captures)?;
     let ident = captures.name("ident")?.as_str();
-
-    // collect all of the potential arguments
-    // in a hashmap
-    let mut arguments = HashMap::new();
-
-    if let Some(args) = captures.name("args") {
-        let mut i = 0;
-
-        for arg in args.as_str().split(",") {
-            let values: Vec<&str> = arg.split("=").map(|s| s.trim()).collect();
-
-            match values.len() {
-                2 => {
-                    arguments.insert(Key::Named(values[0].into()), values[1].into());
-                }
-
-                1 => {
-                    arguments.insert(Key::Ordered(i), values[0].into());
-                    i += 1;
-                }
-
-                _ => {
-                    // TODO: maybe report an error instead of aborting the parsing,
-                    // since it seems quite clear that the user actually is trying to create an
-                    // extension block.
-                    return None;
-                }
-            }
-        }
-    }
 
     // consume the first line of the block
     lines.next();
@@ -138,6 +107,38 @@ fn parse_extension(lines: &mut Lines) -> Option<Block> {
     }
 
     Some(Block::Extension(ident.into(), arguments, contents))
+}
+
+/// Given a regex capture, collect all the arguments
+/// into a hashmap or return None if we fail to parse the input
+fn parse_arguments(captures: &regex::Captures) -> Option<HashMap<Key, String>> {
+    let mut arguments = HashMap::new();
+    let args = captures.name("args")?;
+
+    let mut i = 0;
+
+    for arg in args.as_str().split(",") {
+        let values: Vec<&str> = arg.split("=").map(|s| s.trim()).collect();
+
+        match values.len() {
+            2 => {
+                arguments.insert(Key::Named(values[0].into()), values[1].into());
+            }
+
+            1 => {
+                arguments.insert(Key::Ordered(i), values[0].into());
+                i += 1;
+            }
+
+            _ => {
+                // TODO: maybe report an error instead of aborting the parsing,
+                // since it seems quite clear that the user actually is trying to create an
+                // extension block.
+                return None;
+            }
+        }
+    }
+    Some(arguments)
 }
 
 fn parse_heading(lines: &mut Lines) -> Option<Block> {
@@ -176,9 +177,98 @@ fn consume_text_buffer(text: &mut Vec<String>) -> Vec<Block> {
     paragraphs
 }
 
-/// TODO
-fn parse_inline(s: &str) -> Vec<Inline> {
-    vec![Inline::Text(s.into())]
+/// Parse a string slice into a vector of
+/// all the inline elements found inside.
+pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
+    if source.is_empty() {
+        return vec![];
+    }
+
+    lazy_static! {
+        static ref INLINE_RULE: Regex = Regex::new(
+            r"(?x)
+            # Literals and escape characters
+            (?P<escape>\\(?:
+                /|\*|=|\^|\+|_|
+                Lambda|lambda
+                |Alpha|alpha
+            ))
+            
+            # Typography tags
+            | /(?P<italic>\S|\S.*?\S)/
+            | \*(?P<bold>\S|\S.*?\S)\*
+            | =(?P<underline>\S|\S.*?\S)=
+            | \^(?P<superscript>\S|\S.*?\S)\^
+            | _(?P<subscript>\S|\S.*?\S)_
+            | \+(?P<strikethrough>\S|\S.*?\S)\+
+            
+            # Extension
+            | \|\s*(P?<ident>\w+?)\s*(?:,(?P<args>[^|]+))*\|
+        ",
+        )
+        .unwrap();
+        static ref INLINE_EXTENSION: Regex =
+            Regex::new(r"\|\s*(P?<ident>\w+?)\s*(?:,(?P<args>[^|]+))*\|").unwrap();
+    }
+
+    if let Some(m) = INLINE_RULE.find(source) {
+        let mut result = vec![];
+
+        let preceding_text = &source[..m.start()];
+        let symbol = &source[m.start()..m.start() + 1];
+
+        // add the preceding text
+        if !preceding_text.is_empty() {
+            result.push(Inline::Text(preceding_text.into()));
+        }
+
+        // calc the remainder slice
+        let remainder = if m.end() >= source.len() {
+            ""
+        } else if symbol == r"\" {
+            // escaped items does not have a end tag
+            &source[m.end()..]
+        } else {
+            &source[(m.end() + 1)..]
+        };
+
+        // helper function: trim the ends of matches
+        let trim = |s: &'a str, m: regex::Match, left, right| -> &'a str {
+            &s[(m.start() + left)..(m.end() - right)]
+        };
+
+        // avoids boilerplate code when returning tags
+        macro_rules! tag {
+            ($i:ident) => {
+                vec![Inline::$i(parse_inline(trim(source, m, 1, 1)))]
+            };
+        }
+
+        // parse the children and add the node to the result vector
+        result.append(&mut match symbol {
+            "*" => tag!(Bold),
+            "/" => tag!(Italic),
+            "=" => tag!(Underline),
+            "^" => tag!(Superscript),
+            "_" => tag!(Subscript),
+            "+" => tag!(Strikethrough),
+            r"\" => vec![Inline::Escaped(trim(source, m, 1, 0).into())],
+            "|" => {
+                // This is an extension. Not  the cleanest code,
+                // but we will just capture the groups with a repeated regex match
+                let contents = trim(source, m, 1, 1);
+                vec![] // todo
+            }
+            _ => panic!("inline regex error, unknown tag symbol!"),
+        });
+
+        // parse the remainder
+        result.append(&mut parse_inline(remainder));
+
+        result
+    } else {
+        vec![Inline::Text(source.into())]
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -199,12 +289,13 @@ pub enum Block {
 
 #[derive(Debug)]
 pub enum Inline {
-    Bold(Box<Inline>),
-    Italic(Box<Inline>),
-    Underline(Box<Inline>),
     Text(String),
-    Extension(String, HashMap<String, String>),
-    // literal / escaped,
-    // should decide how i want to do this
-    // i want to support stuff like \Lambda and perhaps auto-convert stuff like -- & ->, and other stuff
+    Escaped(String),
+    Italic(Vec<Inline>),
+    Bold(Vec<Inline>),
+    Underline(Vec<Inline>),
+    Superscript(Vec<Inline>),
+    Subscript(Vec<Inline>),
+    Strikethrough(Vec<Inline>),
+    Extension(String, HashMap<Key, String>)
 }
