@@ -1,7 +1,6 @@
 use super::{inline::parse_inline, Block, Lines, Metadata};
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::iter;
 
 /// Returns the next block and consumes the corresponding lines
 /// Note: this function does not parse normal paragraph blocks,
@@ -70,7 +69,7 @@ fn parse_extension(lines: &mut Lines) -> Option<Block> {
 
     // and than consume everything up until a line
     // that starts with n number of "-" in succession
-    let end_prefix: String = iter::repeat("-").take(divider_length).collect();
+    let end_prefix = "-".repeat(divider_length);
     let contents = lines
         .take_while(|line| !line.trim_start().starts_with(&end_prefix))
         .collect::<Vec<&str>>()
