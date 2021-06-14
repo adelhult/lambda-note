@@ -46,12 +46,12 @@ fn parse_list(_lines: &mut Lines) -> Option<Block> {
 // TODO: does not seem to be working!
 fn parse_extension(lines: &mut Lines) -> Option<Block> {
     lazy_static! {
-        static ref EXTENSION_RULE: Regex =
+        static ref RULE: Regex =
             Regex::new(r"^\s*(?P<div>-{3,})\s*(?P<ident>\w+)\s*(?:,(?P<args>[^-]+))?-*\s*$")
                 .unwrap();
     }
     let line = lines.peek()?;
-    let captures = EXTENSION_RULE.captures(line)?;
+    let captures = RULE.captures(line)?;
     let divider_length = captures.name("div")?.as_str().chars().count();
     let ident = captures.name("ident")?.as_str().to_string();
 
