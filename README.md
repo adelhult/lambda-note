@@ -37,7 +37,7 @@ Inline extension might look something like this
 /Italic/
 *Bold*
 =underlined=
-+strikethrough+
+~strikethrough~
 ^superscript^
 _subscript_
 
