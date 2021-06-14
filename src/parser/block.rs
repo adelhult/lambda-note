@@ -43,7 +43,6 @@ fn parse_list(_lines: &mut Lines) -> Option<Block> {
     None
 }
 
-// TODO: does not seem to be working!
 fn parse_extension(lines: &mut Lines) -> Option<Block> {
     lazy_static! {
         static ref RULE: Regex =
@@ -63,7 +62,7 @@ fn parse_extension(lines: &mut Lines) -> Option<Block> {
                 .split(",")
                 .map(|arg| arg.trim().to_string())
                 .collect()
-        },
+        }
     );
 
     // consume the first line of the block
