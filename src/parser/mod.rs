@@ -2,10 +2,9 @@ use std::{iter, str, collections::HashMap};
 
 pub mod inline;
 pub mod block;
+
 use block::{next_block};
 use inline::{parse_inline};
-
-
 
 #[derive(Debug)]
 pub enum Block {
@@ -14,7 +13,7 @@ pub enum Block {
     Metadata(String, String),
     List(Vec<Inline>), // TODO, support ordered lists
     Divider,           // a section divider, i.e a new page
-    Extension(String, HashMap<Key, String>, String),
+    Extension(String, Vec<String>, String),
 }
 
 #[derive(Debug)]
@@ -27,14 +26,9 @@ pub enum Inline {
     Superscript(Vec<Inline>),
     Subscript(Vec<Inline>),
     Strikethrough(Vec<Inline>),
-    Extension(String, HashMap<Key, String>)
+    Extension(String, Vec<String>)
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-pub enum Key {
-    Ordered(u8),
-    Named(String),
-}
 
 pub type Metadata = HashMap<String, String>;
 type Lines<'a> = iter::Peekable<str::Lines<'a>>;
