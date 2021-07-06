@@ -63,7 +63,7 @@ impl fmt::Display for Inline {
                 Inline::Escaped(character) => character.to_string(),
                 Inline::Begin(tag) => format!("<{}>", tag.to_string()),
                 Inline::End(tag) => format!("</{}>", tag.to_string()),
-                Inline::Extension(name, args) => format!("<{}, {:?}", name, args),
+                Inline::Extension(name, args) => format!("<{}, {:?}/>", name, args),
             }
         )
     }
