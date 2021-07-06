@@ -1,10 +1,10 @@
-use std::{iter, str, collections::HashMap};
+use std::{collections::HashMap, fmt, iter, str};
 
-pub mod inline;
 pub mod block;
+pub mod inline;
 
-use block::{next_block};
-use inline::{parse_inline};
+use block::next_block;
+use inline::parse_inline;
 
 #[derive(Debug)]
 pub enum Block {
@@ -16,19 +16,107 @@ pub enum Block {
     Extension(String, Vec<String>, String),
 }
 
-#[derive(Debug)]
-pub enum Inline {
-    Text(String),
-    Escaped(String),
-    Italic(Vec<Inline>),
-    Bold(Vec<Inline>),
-    Underline(Vec<Inline>),
-    Superscript(Vec<Inline>),
-    Subscript(Vec<Inline>),
-    Strikethrough(Vec<Inline>),
-    Extension(String, Vec<String>)
+impl fmt::Display for Block {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Block::Heading(text, level) => format!(
+                    "{} (lvl {})",
+                    text.iter().map(|i| i.to_string()).collect::<String>(),
+                    level
+                ),
+                Block::Paragraph(text) => format!(
+                    "{}\n",
+                    text.iter().map(|i| i.to_string()).collect::<String>()
+                ),
+                Block::Divider => "</divider>".to_string(),
+                Block::Extension(name, args, contents) => format!(
+                    "<{name}, {args:?}>\n{contents}\n</{name}>",
+                    name = name,
+                    args = args,
+                    contents = contents
+                ),
+                _ => "".to_string(), // TODO: implement for the rest
+            }
+        )
+    }
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Inline {
+    Text(String),
+    Escaped(EscapeChars),
+    Begin(Tag),
+    End(Tag),
+    Extension(String, Vec<String>),
+}
+
+impl fmt::Display for Inline {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Inline::Text(contents) => contents.clone(),
+                Inline::Escaped(character) => character.to_string(),
+                Inline::Begin(tag) => format!("<{}>", tag.to_string()),
+                Inline::End(tag) => format!("</{}>", tag.to_string()),
+                Inline::Extension(name, args) => format!("<{}, {:?}", name, args),
+            }
+        )
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Tag {
+    Italic,
+    Bold,
+    Underline,
+    Superscript,
+    Subscript,
+    Strikethrough,
+}
+
+impl fmt::Display for Tag {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Tag::Italic => "italic",
+                Tag::Bold => "bold",
+                Tag::Underline => "underline",
+                Tag::Superscript => "super",
+                Tag::Subscript => "sub",
+                Tag::Strikethrough => "strikethrough",
+            }
+        )
+    }
+}
+
+// special escape chars like greek letters
+#[derive(Debug, PartialEq, Clone)]
+pub enum EscapeChars {
+    SmallLambda,
+    BigLambda,
+    SmallAlpha,
+}
+
+impl fmt::Display for EscapeChars {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                EscapeChars::SmallLambda => "λ",
+                EscapeChars::BigLambda => "Λ",
+                EscapeChars::SmallAlpha => "α",
+            }
+        )
+    }
+}
 
 pub type Metadata = HashMap<String, String>;
 type Lines<'a> = iter::Peekable<str::Lines<'a>>;

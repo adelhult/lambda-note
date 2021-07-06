@@ -15,7 +15,7 @@ mod tests {
         println!("{:?}", metadata);
 
         for block in blocks {
-            println!("{:?}", block);
+            println!("{}", block);
         }
     }
 }
