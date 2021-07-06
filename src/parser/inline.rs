@@ -39,6 +39,8 @@ pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
     while let Some(current) = state.chars.next() {
         match current {
             '\\' => escape(&mut state),
+            '|' => extension(&mut state),
+            '*' | '/' | '=' | '_' | '^' | '~' => tag(&mut state),
             _ => state.text_buffer.push(current),
         }
     }
@@ -47,6 +49,32 @@ pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
     state.push_buffer();
 
     state.result
+}
+
+/// Parse inline extensions
+fn extension(state: &mut ParserState) {
+    // TODO: write a proper one to handle \| and other
+    // edgecases
+    let contents: Vec<String> = state
+        .chars
+        .by_ref()
+        .take_while(|c| *c != '|')
+        .collect::<String>()
+        .split(",")
+        .map(|s| s.to_string())
+        .collect();
+
+    state.push_buffer();
+
+    state.result.push(Inline::Extension(
+        contents[0].clone(),
+        contents[1..].to_vec(),
+    ))
+}
+
+/// Handle potential start and end tags
+fn tag(state: &mut ParserState) {
+    // TODO
 }
 
 /// Handle potential escape characters and add them to the result vec
@@ -92,10 +120,10 @@ fn escape(state: &mut ParserState) {
             "Psi" => EscapeChar::PsiUpper,
             "omega" => EscapeChar::OmegaLower,
             "Omega" => EscapeChar::OmegaUpper,
-            
+
             "endash" => EscapeChar::EmDash,
             "emdash" => EscapeChar::EnDash,
-            
+
             "right" => EscapeChar::RightThin,
             "Right" => EscapeChar::RightBold,
             "left" => EscapeChar::LeftThin,
@@ -104,11 +132,11 @@ fn escape(state: &mut ParserState) {
             "Up" => EscapeChar::UpBold,
             "down" => EscapeChar::DownThin,
             "Down" => EscapeChar::DownBold,
-            // escaping lambda 
-            "*" => EscapeChar::Asterisk, 
-            "^" => EscapeChar::Caret, 
+            // escaping lambda
+            "*" => EscapeChar::Asterisk,
+            "^" => EscapeChar::Caret,
             "_" => EscapeChar::Underscore,
-            "/" => EscapeChar::ForwardSlash, 
+            "/" => EscapeChar::ForwardSlash,
             "\\" => EscapeChar::BackSlash,
             "=" => EscapeChar::Equal,
             "~" => EscapeChar::Tilde,
