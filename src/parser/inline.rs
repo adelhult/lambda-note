@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use tst::{tstmap, TSTMap};
 
-use super::{EscapeChars, Inline, Tag};
+use super::{EscapeChar, Inline, Tag};
 use std::{iter::Peekable, str::Chars};
 
 struct ParserState<'a> {
@@ -32,7 +32,7 @@ impl<'a> ParserState<'a> {
 }
 
 /// Parse a string slice into a vector of
-/// all the inline elements found inside.
+/// all the inline elements found inside of it.
 pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
     let mut state = ParserState::new(source);
 
@@ -43,7 +43,7 @@ pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
         }
     }
 
-    // finally, push the iflast bit of the buffer
+    // finally, push the last bit of the buffer
     state.push_buffer();
 
     state.result
@@ -53,10 +53,67 @@ pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
 fn escape(state: &mut ParserState) {
     lazy_static! {
         // a prefix tree maping all the possible special escape characters
-        static ref ESCAPE_TRIE: TSTMap<EscapeChars> = tstmap! {
-            "Lambda" =>  EscapeChars::BigLambda,
-            "lambda" => EscapeChars::SmallLambda,
-            "alpha" => EscapeChars::SmallAlpha,
+        static ref ESCAPE_TRIE: TSTMap<EscapeChar> = tstmap! {
+            "alpha" => EscapeChar::Alpha,
+            "beta" => EscapeChar::Beta,
+            "gamma" => EscapeChar::GammaLower,
+            "Gamma" => EscapeChar::GammaUpper,
+            "delta" => EscapeChar::DeltaLower,
+            "Delta" => EscapeChar::DeltaUpper,
+            "epsilon" => EscapeChar::Epsilon,
+            "varepsilon" => EscapeChar::EpsilonVar,
+            "zeta" => EscapeChar::Zeta,
+            "eta" => EscapeChar::Eta,
+            "theta" => EscapeChar::ThetaLower,
+            "Theta" => EscapeChar::ThetaUpper,
+            "vartheta" => EscapeChar::ThetaVar,
+            "iota" => EscapeChar::Iota,
+            "kappa" => EscapeChar::Kappa,
+            "lambda" => EscapeChar::LambdaLower,
+            "Lambda" => EscapeChar::LambdaUpper,
+            "mu" => EscapeChar::Mu,
+            "nu" => EscapeChar::Nu,
+            "xi" => EscapeChar::XiLower,
+            "Xi" => EscapeChar::XiUpper,
+            "pi" => EscapeChar::PiLower,
+            "Pi" => EscapeChar::PiUpper,
+            "rho" => EscapeChar::Rho,
+            "varrho" => EscapeChar::RhoVar,
+            "sigma" => EscapeChar::SigmaLower,
+            "Sigma" => EscapeChar::SigmaUpper,
+            "tau" => EscapeChar::Tau,
+            "upsilon" => EscapeChar::UpsilonLower,
+            "Upsilon" => EscapeChar::UpsilonUpper,
+            "phi" => EscapeChar::PhiLower,
+            "Phi" => EscapeChar::PhiUpper,
+            "varphi" => EscapeChar::PhiVar,
+            "chi" => EscapeChar::Chi,
+            "psi" => EscapeChar::PsiLower,
+            "Psi" => EscapeChar::PsiUpper,
+            "omega" => EscapeChar::OmegaLower,
+            "Omega" => EscapeChar::OmegaUpper,
+            
+            "endash" => EscapeChar::EmDash,
+            "emdash" => EscapeChar::EnDash,
+            
+            "right" => EscapeChar::RightThin,
+            "Right" => EscapeChar::RightBold,
+            "left" => EscapeChar::LeftThin,
+            "Left" => EscapeChar::LeftBold,
+            "up" => EscapeChar::UpThin,
+            "Up" => EscapeChar::UpBold,
+            "down" => EscapeChar::DownThin,
+            "Down" => EscapeChar::DownBold,
+            // escaping lambda 
+            "*" => EscapeChar::Asterisk, 
+            "^" => EscapeChar::Caret, 
+            "_" => EscapeChar::Underscore,
+            "/" => EscapeChar::ForwardSlash, 
+            "\\" => EscapeChar::BackSlash,
+            "=" => EscapeChar::Equal,
+            "~" => EscapeChar::Tilde,
+            "|" => EscapeChar::Bar,
+            "tableflip" => EscapeChar::TableFlip,
         };
     }
     let mut s = String::new();
