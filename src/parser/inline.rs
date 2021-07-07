@@ -53,23 +53,36 @@ pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
 
 /// Parse inline extensions
 fn extension(state: &mut ParserState) {
-    // TODO: write a proper one to handle \| and other
-    // edgecases
-    let contents: Vec<String> = state
-        .chars
-        .by_ref()
-        .take_while(|c| *c != '|')
-        .collect::<String>()
-        .split(",")
-        .map(|s| s.to_string())
-        .collect();
+    let mut content = String::new();
+    let mut terminated = false;
+    while let Some(c) = state.chars.next() {
+        // consume everything up until a second '|'
+        if c == '|' {
+            terminated = true;
+            break;
+        }
 
-    state.push_buffer();
+        // handle escaping of bar characters inside
+        // of extensions such as '\|'.
+        if c == '\\' && state.chars.peek() == Some(&'|') {
+            content.push('|');
+            state.chars.next();
+        } else {
+            content.push(c);
+        }
+    }
 
-    state.result.push(Inline::Extension(
-        contents[0].clone(),
-        contents[1..].to_vec(),
-    ))
+    // unterminated extensions are interpreted as
+    // just normal text
+    if !terminated {
+        state.text_buffer.push_str(&content);
+        return;
+    }
+
+    let argv: Vec<String> = content.split(",").map(|s| s.to_string()).collect();
+    state
+        .result
+        .push(Inline::Extension(argv[0].clone(), argv[1..].to_vec()));
 }
 
 /// Handle potential start and end tags
