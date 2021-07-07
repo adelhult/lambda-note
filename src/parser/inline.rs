@@ -144,27 +144,37 @@ fn escape(state: &mut ParserState) {
             "tableflip" => EscapeChar::TableFlip,
         };
     }
-    let mut s = String::new();
-    while let Some(next_char) = state.chars.next() {
-        s.push(next_char);
 
-        let nr_matches = ESCAPE_TRIE.prefix_iter(&s).count();
+    // take all chars up until the next whitespace
+    let word: String = state
+        .chars
+        .clone()
+        .take_while(|c| !c.is_whitespace())
+        .collect();
 
-        if nr_matches > 1 {
-            continue;
-        } else if nr_matches == 1 {
-            if let Some(escape_char) = ESCAPE_TRIE.get(&s) {
-                state.push_buffer();
-                state.result.push(Inline::Escaped(escape_char.to_owned()));
-                return;
-            } else {
-                continue; // we have a match but must still collect more chars
-            }
-        }
+    let escape_char = ESCAPE_TRIE.longest_prefix(&word);
+    println!("{}", escape_char);
 
-        // if there are no matches add the chars that we collect so far
-        // to the text buffer
-        state.text_buffer.push_str(&format!("\\{}", s));
+    if escape_char.is_empty() {
+        // there were no matches, just add the backslash
+        // and continue parsing the rest of the paragraph
+        state.text_buffer.push('\\');
         return;
     }
+
+    // we seem to have found a match,
+    // first we advance the iterator by the correct amount
+    // TODO: repace with advance_by once stable.
+    for _ in 0..escape_char.len() {
+        state.chars.next();
+    }
+    println!("buffer:{:?}", state.text_buffer);
+    state.push_buffer();
+
+    state.result.push(Inline::Escaped(
+        ESCAPE_TRIE
+            .get(escape_char)
+            .expect("Failed to find escape char (should not be to happen)")
+            .to_owned(),
+    ));
 }
