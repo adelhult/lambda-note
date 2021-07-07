@@ -75,7 +75,7 @@ fn extension(state: &mut ParserState) {
     // unterminated extensions are interpreted as
     // just normal text
     if !terminated {
-        state.text_buffer.push_str(&content);
+        state.text_buffer.push_str(&format!("|{}", content));
         return;
     }
 
