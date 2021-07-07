@@ -168,7 +168,7 @@ fn escape(state: &mut ParserState) {
     for _ in 0..escape_char.len() {
         state.chars.next();
     }
-    println!("buffer:{:?}", state.text_buffer);
+
     state.push_buffer();
 
     state.result.push(Inline::Escaped(
