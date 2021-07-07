@@ -153,7 +153,6 @@ fn escape(state: &mut ParserState) {
         .collect();
 
     let escape_char = ESCAPE_TRIE.longest_prefix(&word);
-    println!("{}", escape_char);
 
     if escape_char.is_empty() {
         // there were no matches, just add the backslash
