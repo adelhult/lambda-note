@@ -38,6 +38,7 @@ pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
 
     while let Some(current) = state.chars.next() {
         match current {
+            '\n' => state.text_buffer.push(' '), // kanske inte helt rätt? Borde peeka och kolla om det finns flera chars
             '\\' => escape(&mut state),
             '|' => extension(&mut state),
             '*' | '/' | '=' | '_' | '^' | '~' => tag(&mut state),
@@ -78,6 +79,8 @@ fn extension(state: &mut ParserState) {
         state.text_buffer.push_str(&format!("|{}", content));
         return;
     }
+
+    state.push_buffer();
 
     let argv: Vec<String> = content.split(",").map(|s| s.to_string()).collect();
     state
@@ -134,8 +137,8 @@ fn escape(state: &mut ParserState) {
             "omega" => EscapeChar::OmegaLower,
             "Omega" => EscapeChar::OmegaUpper,
 
-            "endash" => EscapeChar::EmDash,
-            "emdash" => EscapeChar::EnDash,
+            "endash" => EscapeChar::EnDash,
+            "emdash" => EscapeChar::EmDash,
 
             "right" => EscapeChar::RightThin,
             "Right" => EscapeChar::RightBold,
