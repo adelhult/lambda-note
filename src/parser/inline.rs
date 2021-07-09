@@ -38,10 +38,14 @@ pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
 
     while let Some(current) = state.chars.next() {
         match current {
-            '\n' => state.text_buffer.push(' '), // kanske inte helt rätt? Borde peeka och kolla om det finns flera chars
             '\\' => escape(&mut state),
             '|' => extension(&mut state),
             '*' | '/' | '=' | '_' | '^' | '~' => tag(&mut state),
+            '\n' => {
+                if state.chars.peek().is_some() {
+                    state.text_buffer.push(' ');
+                }
+            },
             _ => state.text_buffer.push(current),
         }
     }
