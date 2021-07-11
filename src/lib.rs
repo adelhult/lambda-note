@@ -1,6 +1,10 @@
-mod parser;
+use std::fs;
 
-pub use parser::{parse_doc, Block, Inline, Metadata};
+mod parser;
+mod translator;
+
+pub use parser::{parse_doc, Block, Inline, Metadata, Tag};
+pub use translator::translate;
 
 #[cfg(test)]
 mod tests {
@@ -8,16 +12,24 @@ mod tests {
 
     #[test]
     fn work_in_progress() {
-        let contents =
+        let content =
             std::fs::read_to_string("test.ln").expect("Something went wrong reading the file");
 
-        let (blocks, metadata) = parse_doc(&contents);
+        let (blocks, metadata) = parse_doc(&content);
 
         println!("{:?}", metadata);
 
         for block in blocks {
             println!("{}", block);
         }
+    }
+    #[test]
+    fn translation_test() {
+        let content = fs::read_to_string("test.ln").expect("Something went wrong reading the file");
+
+        let (blocks, _) = parse_doc(&content);
+        let output = translate(blocks).unwrap();
+        fs::write("test.html", output).expect("Unable to write file");
     }
 
     #[test]
