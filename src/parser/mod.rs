@@ -44,7 +44,7 @@ impl fmt::Display for Block {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Inline {
     Text(String),
     Escaped(EscapeChar),
@@ -69,7 +69,7 @@ impl fmt::Display for Inline {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Tag {
     Italic,
     Bold,

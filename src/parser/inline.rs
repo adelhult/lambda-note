@@ -1,3 +1,7 @@
+// TODO: this code is somewhat messy
+// half the logic lives in the struct and the other half outside
+// this should be cleaned up at some point.
+
 use lazy_static::lazy_static;
 use tst::{tstmap, TSTMap};
 
@@ -6,18 +10,22 @@ use std::{iter::Peekable, str::Chars};
 
 struct ParserState<'a> {
     result: Vec<Inline>,
-    stack: Vec<Tag>,
+    // the stack is used to keep track of begin tags
+    // that are yet to be closed by an end tag.
+    open_tags: Vec<Tag>,
     text_buffer: String,
     chars: Peekable<Chars<'a>>,
+    prev_is_whitespace: bool,
 }
 
 impl<'a> ParserState<'a> {
     fn new(source: &'a str) -> Self {
         ParserState {
             result: vec![],
-            stack: vec![],
+            open_tags: vec![],
             text_buffer: String::new(),
             chars: source.chars().peekable(),
+            prev_is_whitespace: false,
         }
     }
 
@@ -28,6 +36,54 @@ impl<'a> ParserState<'a> {
         }
         self.result.push(Inline::Text(self.text_buffer.clone()));
         self.text_buffer.clear();
+    }
+
+    /// peek in the chars iterator and check if the next
+    /// char is a given character
+    fn next_is(&mut self, c: char) -> bool {
+        if let Some(next) = self.chars.peek() {
+            *next == c
+        } else {
+            false
+        }
+    }
+
+    fn is_closing_tag(&self, tag: &Tag) -> bool {
+        if let Some(prev_tag) = self.open_tags.last() {
+            prev_tag == tag
+        } else {
+            false
+        }
+    }
+
+    /// corrects the result vec.
+    /// It will empty the result buffer one last time
+    /// and look at the stack
+    /// of unclosed tags and correct based upon them.
+    fn amend(&mut self) {
+        self.push_buffer();
+
+        // Fix missplaced Begin(Tag)'s
+        self.result.reverse();
+
+        let mut i = 0;
+        while i < self.result.len() {
+            if self.open_tags.is_empty() {
+                break;
+            }
+
+            let missplaced_tag = self.open_tags.last().unwrap();
+
+            if let Inline::Begin(tag) = &self.result[i] {
+                if tag == missplaced_tag {
+                    self.result[i] = Inline::Text(tag_to_string(&tag));
+                    self.open_tags.pop();
+                }
+            }
+            i += 1;
+        }
+
+        self.result.reverse();
     }
 }
 
@@ -40,19 +96,18 @@ pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
         match current {
             '\\' => escape(&mut state),
             '|' => extension(&mut state),
-            '*' | '/' | '=' | '_' | '^' | '~' => tag(&mut state),
+            '*' | '/' | '=' | '_' | '^' | '~' => tag(current, &mut state),
             '\n' => {
                 if state.chars.peek().is_some() {
                     state.text_buffer.push(' ');
                 }
-            },
+            }
             _ => state.text_buffer.push(current),
         }
+
+        state.prev_is_whitespace = current.is_whitespace();
     }
-
-    // finally, push the last bit of the buffer
-    state.push_buffer();
-
+    state.amend();
     state.result
 }
 
@@ -93,8 +148,76 @@ fn extension(state: &mut ParserState) {
 }
 
 /// Handle potential start and end tags
-fn tag(state: &mut ParserState) {
-    // TODO
+fn tag(first: char, state: &mut ParserState) {
+    let mut consumed_chars = first.to_string();
+    // ensure that the neighboring char is the same
+    if !state.next_is(first) {
+        state.text_buffer.push(first);
+        return;
+    }
+
+    // we can now safely consume
+    // the second char of the tag
+    consumed_chars.push(state.chars.next().unwrap());
+
+    // (should never cause an exception)
+    let tag = char_to_tag(first).expect("The char is not representing a tag");
+
+    // Check if it is an closing tag
+    if state.is_closing_tag(&tag) {
+        if state.prev_is_whitespace {
+            // closing tags can't come directly after a whitespace
+            // so we abort and add the consumed chars to the buffer
+            state.text_buffer.push_str(&consumed_chars);
+            return;
+        }
+    
+        // seems like we got a valid closing tag
+        state.open_tags.pop();
+        state.push_buffer();
+        state.result.push(Inline::End(tag));
+        return;
+    }
+    
+    // otherwise... it's an opening tag
+    if let Some(next) = state.chars.peek() {
+        if next.is_whitespace() {
+            // not a valid opening tag if it starts with whitespace
+            // so we will abort and just push
+            // the chars consumed so far to the buffer
+            state.text_buffer.push_str(&consumed_chars);
+            return;
+        }
+    }
+    state.open_tags.push(tag.clone());
+    state.push_buffer();
+    state.result.push(Inline::Begin(tag));
+}
+
+/// Given a char, return the styling tag it
+/// represents
+fn char_to_tag(c: char) -> Option<Tag> {
+    match c {
+        '*' => Some(Tag::Bold),
+        '/' => Some(Tag::Italic),
+        '_' => Some(Tag::Subscript),
+        '^' => Some(Tag::Superscript),
+        '=' => Some(Tag::Underline),
+        '~' => Some(Tag::Strikethrough),
+        _ => None,
+    }
+}
+
+fn tag_to_string(tag: &Tag) -> String {
+    match tag {
+        &Tag::Bold => "**",
+        &Tag::Italic => "//",
+        &Tag::Strikethrough => "~~",
+        &Tag::Subscript => "__",
+        &Tag::Superscript => "^^",
+        &Tag::Underline => "==",
+    }
+    .to_string()
 }
 
 /// Handle potential escape characters and add them to the result vec
