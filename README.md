@@ -34,12 +34,12 @@ x^2 + 3z \cdot \Lambda
 Inline extension might look something like this
 | math, x^2 + 3z |
 
-/Italic/
-*Bold*
-=underlined=
-~strikethrough~
-^superscript^
-_subscript_
+//Italic//
+**Bold**
+==underlined==
+~~strikethrough~~
+^^superscript^^
+__subscript__
 
 TODO: lists
 ```
