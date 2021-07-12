@@ -280,6 +280,13 @@ fn consume_text_buffer(text: &mut Vec<String>) -> Vec<Block> {
         .join("\n")
         .split("\n\n")
         .map(|p| Block::Paragraph(parse_inline(p)))
+        .filter(|block| {
+            if let Block::Paragraph(p) = block {
+                !p.is_empty()
+            } else {
+                true
+            }
+        })
         .collect();
 
     text.clear();
