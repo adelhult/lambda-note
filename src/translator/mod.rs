@@ -1,4 +1,12 @@
+use serde::{Deserialize, Serialize};
 use super::{Block, Inline, Tag};
+
+#[derive(Serialize, Deserialize)]
+pub enum OutputFormat {
+    LambdaNote,
+    Html,
+    Latex,
+}
 
 pub fn translate(blocks: Vec<Block>) -> Option<String> {
     Some(

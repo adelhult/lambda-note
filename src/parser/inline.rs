@@ -8,6 +8,30 @@ use tst::{tstmap, TSTMap};
 use super::{EscapeChar, Inline, Tag};
 use std::{iter::Peekable, str::Chars};
 
+/// Parse a string slice into a vector of
+/// all the inline elements found inside of it.
+pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
+    let mut state = ParserState::new(source);
+
+    while let Some(current) = state.chars.next() {
+        match current {
+            '\\' => escape(&mut state),
+            '|' => extension(&mut state),
+            '*' | '/' | '=' | '_' | '^' | '~' => tag(current, &mut state),
+            '\n' => {
+                if state.chars.peek().is_some() {
+                    state.text_buffer.push(' ');
+                }
+            }
+            _ => state.text_buffer.push(current),
+        }
+
+        state.prev_is_whitespace = current.is_whitespace();
+    }
+    state.amend();
+    state.result
+}
+
 struct ParserState<'a> {
     result: Vec<Inline>,
     // the stack is used to keep track of begin tags
@@ -87,29 +111,6 @@ impl<'a> ParserState<'a> {
     }
 }
 
-/// Parse a string slice into a vector of
-/// all the inline elements found inside of it.
-pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
-    let mut state = ParserState::new(source);
-
-    while let Some(current) = state.chars.next() {
-        match current {
-            '\\' => escape(&mut state),
-            '|' => extension(&mut state),
-            '*' | '/' | '=' | '_' | '^' | '~' => tag(current, &mut state),
-            '\n' => {
-                if state.chars.peek().is_some() {
-                    state.text_buffer.push(' ');
-                }
-            }
-            _ => state.text_buffer.push(current),
-        }
-
-        state.prev_is_whitespace = current.is_whitespace();
-    }
-    state.amend();
-    state.result
-}
 
 /// Parse inline extensions
 fn extension(state: &mut ParserState) {

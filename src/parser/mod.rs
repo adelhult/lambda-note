@@ -6,7 +6,7 @@ pub mod inline;
 use block::next_block;
 use inline::parse_inline;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Block {
     Heading(Vec<Inline>, u8),
     Paragraph(Vec<Inline>),
