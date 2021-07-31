@@ -1,79 +1,134 @@
-use serde::{Deserialize, Serialize};
-use super::{Block, Inline, Tag};
+mod html;
+mod latex;
 
-#[derive(Serialize, Deserialize)]
+use self::html::boilerplate;
+
+use super::{parse_doc, Block, Inline, Metadata, Tag};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+#[derive(Serialize, Deserialize, Debug)]
 pub enum OutputFormat {
     LambdaNote,
     Html,
     Latex,
 }
 
-pub fn translate(blocks: Vec<Block>) -> Option<String> {
-    Some(
-        blocks
-            .into_iter()
-            .map(|block| {
-                let mut s = translate_block(block);
-                s.push('\n');
-                s
-            })
-            .collect(),
-    )
+pub trait Translator {
+    fn translate_block(state: &mut DocumentState, block: Block) -> Option<String>;
+    fn translate_inline(inline: Inline) -> String;
+    fn boilerplate(state: &mut DocumentState, content: &str) -> String;
+    fn escape_str(raw: &str) -> String;
 }
 
-fn translate_block(block: Block) -> String {
-    match block {
-        Block::Heading(inline, lvl) => {
-            let level = if lvl > 6 { 6 } else { lvl };
-            format!(
-                "<h{level}>{text}</h{level}>",
-                level = level,
-                text = translate_inline(inline)
-            )
+struct Extension; // TODO
+
+// TODO: maybe rename
+pub struct DocumentState {
+    metadata: HashMap<String, String>,
+    extensions: HashMap<String, Extension>,
+    warnings: Vec<String>,
+    errors: Vec<String>,
+    output_format: OutputFormat,
+}
+
+impl DocumentState {
+    /// create a new empty document state
+    pub fn new(output_format: OutputFormat) -> Self {
+        let mut extensions = HashMap::new();
+        // todo add some default extensions;
+        DocumentState {
+            metadata: HashMap::new(),
+            extensions,
+            output_format,
+            warnings: vec![],
+            errors: vec![],
         }
-        Block::Divider => "<hr/>".to_string(),
-        Block::Extension(ident, _, _) => format!("<extension {}>", ident), //Todo
-        Block::Paragraph(content) => format!("<p>{}</p>", translate_inline(content)),
-        _ => "".to_string(),
     }
-}
 
-fn translate_inline(text: Vec<Inline>) -> String {
-    text.iter()
-        .map(|el| {
-            match el {
-                Inline::Begin(tag) => format!("<{}>", tag_to_string(&tag)),
-                Inline::End(tag) => format!("</{}>", tag_to_string(&tag)),
-                Inline::Escaped(escaped) => escaped.to_string(),
-                Inline::Text(content) => escape_str(content),
-                // TODO: how do we handle extensions?
-                Inline::Extension(ident, _) => format!("<extension {}", ident),
+    /// Given the current document state translate the source text
+    /// and mutate the state if a new extensions or metadata fields
+    /// are found
+    pub fn translate(&mut self, source: &str) -> String {
+        let mut output = String::new();
+
+        for block in parse_doc(source) {
+            if let Some(s) = self.translate_block(block) {
+                output.push_str(&format!("{}\n", s))
             }
-        })
-        .collect()
-}
-
-fn tag_to_string(tag: &Tag) -> String {
-    match tag {
-        &Tag::Bold => "strong",
-        &Tag::Italic => "em",
-        &Tag::Underline => "ins",
-        &Tag::Superscript => "sup",
-        &Tag::Subscript => "sub",
-        &Tag::Strikethrough => "del",
+        }
+        
+        match self.output_format {
+            OutputFormat::Latex => latex::boilerplate(self, &output),
+            OutputFormat::Html => html::boilerplate(self, &output),
+            _ => panic!("Output format not supported"),
+        }
     }
-    .to_string()
+
+    /// translate an extension
+    fn translate_extension(
+        &mut self,
+        symbol: String,
+        args: Vec<String>,
+        variant: ExtensionVariant,
+    ) -> Option<String> {
+        todo!()
+    }
+
+    /// Add a new metadata field to the document state
+    fn add_metadata(&mut self, symbol: String, value: String) {
+        self.metadata.insert(symbol, value);
+    }
+
+    /// Translate a block and return the translated text as an option
+    fn translate_block(&mut self, block: Block) -> Option<String> {
+        match block {
+            Block::Extension(symbol, args) => {
+                self.translate_extension(symbol, args, ExtensionVariant::Block)
+            }
+            Block::Metadata(symbol, value) => {
+                self.add_metadata(symbol, value);
+                None
+            }
+            // The translation of all other blocks will be delegated
+            // to the translator for the current output format
+            _ => match self.output_format {
+                // TODO: these should be compiled based on if a crate feature is enabled
+                // we might not want to bloat the binary with a latex translator if we are
+                // building a web viewer for instance
+                OutputFormat::Html => html::translate_block(self, block),
+                OutputFormat::Latex => latex::translate_block(self, block),
+                _ => panic!(
+                    "The output format {:?} is not supported",
+                    self.output_format
+                ),
+            },
+        }
+    }
+
+    fn translate_text(&mut self, text: Vec<Inline>) -> String {
+        text.into_iter().map(|i| self.translate_inline(i)).collect()
+    }
+
+    fn translate_inline(&mut self, inline: Inline) -> String {
+        if let Inline::Extension(symbol, args) = inline {
+            return self
+                .translate_extension(symbol, args, ExtensionVariant::Inline)
+                .unwrap_or("".to_string());
+        }
+
+        return match self.output_format {
+            OutputFormat::Html => html::translate_inline(inline),
+            OutputFormat::Latex => latex::translate_inline(inline),
+            _ => panic!(
+                "The output format {:?} is not supported",
+                self.output_format
+            ),
+        };
+    }
 }
 
-fn escape_str(raw: &str) -> String {
-    raw.chars()
-        .map(|c| match c {
-            '&' => "&amp;".to_string(),
-            '<' => "&lt;".to_string(),
-            '>' => "&gt;".to_string(),
-            '"' => "&quot;".to_string(),
-            '\'' => "&#39;".to_string(),
-            c => c.to_string(),
-        })
-        .collect()
+pub enum ExtensionVariant {
+    Block,
+    Inline,
 }

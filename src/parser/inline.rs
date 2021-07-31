@@ -285,6 +285,7 @@ fn escape(state: &mut ParserState) {
             "=" => EscapeChar::Equal,
             "~" => EscapeChar::Tilde,
             "|" => EscapeChar::Bar,
+            ":" => EscapeChar::Colon,
             "tableflip" => EscapeChar::TableFlip,
         };
     }

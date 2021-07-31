@@ -13,7 +13,7 @@ pub enum Block {
     Metadata(String, String),
     List(Vec<Inline>), // TODO, support ordered lists
     Divider,           // a section divider, i.e a new page
-    Extension(String, Vec<String>, String),
+    Extension(String, Vec<String>),
 }
 
 impl fmt::Display for Block {
@@ -32,11 +32,10 @@ impl fmt::Display for Block {
                     text.iter().map(|i| i.to_string()).collect::<String>()
                 ),
                 Block::Divider => "</divider>".to_string(),
-                Block::Extension(name, args, contents) => format!(
-                    "<{name}, {args:?}>\n{contents}\n</{name}>",
+                Block::Extension(name, args) => format!(
+                    "<{name}, {args:?}>\n</{name}>",
                     name = name,
-                    args = args,
-                    contents = contents
+                    args = args
                 ),
                 _ => "".to_string(), // TODO: implement for the rest
             }
@@ -159,6 +158,7 @@ pub enum EscapeChar {
     Equal,
     Tilde,
     Bar,
+    Colon,
     TableFlip,
 }
 
@@ -229,6 +229,7 @@ impl fmt::Display for EscapeChar {
                 EscapeChar::Equal => "=",
                 EscapeChar::Tilde => "~",
                 EscapeChar::Bar => "|",
+                EscapeChar::Colon => ":",
                 EscapeChar::TableFlip => "(╯°□°）╯︵ ┻━┻",
             }
         )
@@ -238,14 +239,13 @@ impl fmt::Display for EscapeChar {
 pub type Metadata = HashMap<String, String>;
 type Lines<'a> = iter::Peekable<str::Lines<'a>>;
 
-pub fn parse_doc(source: &str) -> (Vec<Block>, Metadata) {
-    let mut metadata = HashMap::new();
+pub fn parse_doc(source: &str) -> Vec<Block> {
     let mut lines = source.lines().peekable();
     let mut text: Vec<String> = vec![];
     let mut blocks = vec![];
 
     loop {
-        if let Some(block) = next_block(&mut lines, &mut metadata) {
+        if let Some(block) = next_block(&mut lines) {
             // start of a new block -> empty the buffer
             if !text.is_empty() {
                 blocks.append(&mut consume_text_buffer(&mut text));
@@ -270,7 +270,7 @@ pub fn parse_doc(source: &str) -> (Vec<Block>, Metadata) {
             blocks.append(&mut consume_text_buffer(&mut text));
         }
 
-        break (blocks, metadata);
+        break blocks;
     }
 }
 

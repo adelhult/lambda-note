@@ -2,12 +2,9 @@ mod extension_manager;
 mod parser;
 mod translator;
 
-use std::io::{Read, Write};
-use std::process::{Command, Stdio};
-
 pub use extension_manager::greet;
 pub use parser::{parse_doc, Block, EscapeChar, Inline, Metadata, Tag};
-pub use translator::{translate, OutputFormat};
+pub use translator::{DocumentState, OutputFormat};
 
 #[cfg(test)]
 mod tests {
@@ -18,58 +15,26 @@ mod tests {
         let content =
             std::fs::read_to_string("test.ln").expect("Something went wrong reading the file");
 
-        let (blocks, metadata) = parse_doc(&content);
-
-        println!("{:?}", metadata);
+        let blocks = parse_doc(&content);
 
         for block in blocks {
             println!("{}", block);
         }
     }
+
     #[test]
     fn translation_test() {
         let content = fs::read_to_string("test.ln").expect("Something went wrong reading the file");
 
-        let (blocks, _) = parse_doc(&content);
-        let output = translate(blocks).unwrap();
-        fs::write("test.html", output).expect("Unable to write file");
-    }
+        let mut doc_state = DocumentState::new(OutputFormat::Latex);
+        let output = doc_state.translate(&content);
 
-    #[test]
-    fn extension_test() {
-        let process = Command::new("python")
-            .arg("extension_test.py")
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .spawn()
-            .expect("Failed to spawn extension");
-
-        // Write a string to the `stdin` of `wc`.
-        //
-        // `stdin` has type `Option<ChildStdin>`, but since we know this instance
-        // must have one, we can directly `unwrap` it.
-        match process.stdin.unwrap().write_all(greet().as_bytes()) {
-            Err(why) => panic!("couldn't write to extension stdin: {}", why),
-            Ok(_) => println!("sent message"),
-        }
-
-        // Because `stdin` does not live after the above calls, it is `drop`ed,
-        // and the pipe is closed.
-        //
-        // This is very important, otherwise `wc` wouldn't start processing the
-        // input we just sent.
-
-        // The `stdout` field also has type `Option<ChildStdout>` so must be unwrapped.
-        let mut s = String::new();
-        match process.stdout.unwrap().read_to_string(&mut s) {
-            Err(why) => panic!("couldn't read wc stdout: {}", why),
-            Ok(_) => print!("wc responded with:\n{}", s),
-        }
+        fs::write("test.tex", output).expect("Unable to write file");
     }
 
     #[test]
     fn escape_chars() {
-        let (dashes, _) = parse_doc(r#"\endash\emdash"#);
+        let dashes = parse_doc(r#"\endash\emdash"#);
         assert_eq!(
             dashes[0],
             Block::Paragraph(vec![
@@ -79,7 +44,7 @@ mod tests {
             "Testing en dashes and em dashes"
         );
 
-        let (tag_symbols, _) = parse_doc(r#"\*\^\_\/\\\=\~\|"#);
+        let tag_symbols = parse_doc(r#"\*\^\_\/\\\=\~\|\:"#);
         assert_eq!(
             tag_symbols[0],
             Block::Paragraph(vec![
@@ -90,16 +55,17 @@ mod tests {
                 Inline::Escaped(EscapeChar::BackSlash),
                 Inline::Escaped(EscapeChar::Equal),
                 Inline::Escaped(EscapeChar::Tilde),
-                Inline::Escaped(EscapeChar::Bar)
+                Inline::Escaped(EscapeChar::Bar),
+                Inline::Escaped(EscapeChar::Colon)
             ]),
             "Testing tag symbols"
         );
 
-        let (greek_letters, _) = parse_doc(
+        let greek_letters = parse_doc(
             r#"
-        \alpha\beta\gamma\Gamma\delta\Delta\epsilon\varepsilon\zeta\eta\theta\Theta\vartheta
-        \iota\kappa\lambda\Lambda\mu\nu\xi\Xi\pi\Pi\rho\varrho\sigma\Sigma\tau\upsilon\Upsilon
-        \phi\Phi\varphi\chi\psi\Psi\omega\Omega
+            \alpha\beta\gamma\Gamma\delta\Delta\epsilon\varepsilon\zeta\eta\theta\Theta\vartheta
+            \iota\kappa\lambda\Lambda\mu\nu\xi\Xi\pi\Pi\rho\varrho\sigma\Sigma\tau\upsilon\Upsilon
+            \phi\Phi\varphi\chi\psi\Psi\omega\Omega
         "#,
         );
 

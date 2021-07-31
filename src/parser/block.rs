@@ -5,15 +5,15 @@ use regex::Regex;
 /// Returns the next block and consumes the corresponding lines
 /// Note: this function does not parse normal paragraph blocks,
 /// that is done in the `parse_doc` function.
-pub fn next_block(lines: &mut Lines, metadata: &mut Metadata) -> Option<Block> {
+pub fn next_block(lines: &mut Lines) -> Option<Block> {
     parse_extension(lines)
-        .or_else(|| parse_metadata(lines, metadata))
+        .or_else(|| parse_metadata(lines))
         .or_else(|| parse_heading(lines))
         .or_else(|| parse_divider(lines))
         .or_else(|| parse_list(lines))
 }
 
-fn parse_metadata(lines: &mut Lines, metadata: &mut Metadata) -> Option<Block> {
+fn parse_metadata(lines: &mut Lines) -> Option<Block> {
     let line = lines.peek()?;
 
     lazy_static! {
@@ -26,7 +26,6 @@ fn parse_metadata(lines: &mut Lines, metadata: &mut Metadata) -> Option<Block> {
 
     // consume the line
     lines.next();
-    metadata.insert(key.into(), value.into());
     Some(Block::Metadata(key.into(), value.into()))
 }
 
@@ -54,7 +53,7 @@ fn parse_extension(lines: &mut Lines) -> Option<Block> {
     let ident = captures.name("ident")?.as_str().to_string();
 
     // collect the arguments into a Vec<String>
-    let arguments = captures.name("args").map_or_else(
+    let mut arguments = captures.name("args").map_or_else(
         || Vec::new(),
         |s| {
             s.as_str()
@@ -73,9 +72,12 @@ fn parse_extension(lines: &mut Lines) -> Option<Block> {
     let contents = lines
         .take_while(|line| !line.trim_start().starts_with(&end_prefix))
         .collect::<Vec<&str>>()
-        .join("\n");        
+        .join("\n");   
+    
+    // the first argument will be the main content of the block
+    arguments.insert(0, contents);
 
-    Some(Block::Extension(ident, arguments, contents))
+    Some(Block::Extension(ident, arguments))
 }
 
 fn parse_heading(lines: &mut Lines) -> Option<Block> {
