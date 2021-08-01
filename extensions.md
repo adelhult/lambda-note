@@ -16,3 +16,7 @@ A list of ideas for built-in extensions.
 * uri/path - add file system paths or uri:s
 * unescape - text that's not escaped by the translator (to include things like raw html/latex).
 * raw/escape/indentiy - just raw text to avoid
+* abstract
+* make title
+* math
+
