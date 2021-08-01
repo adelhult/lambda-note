@@ -1,13 +1,13 @@
 mod html;
 mod latex;
 
-use self::html::boilerplate;
-
 use super::{parse_doc, Block, Inline, Metadata, Tag};
+use crate::extensions;
+use extensions::{get_native_extensions, Extension, ExtensionVariant};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum OutputFormat {
     LambdaNote,
     Html,
@@ -21,12 +21,10 @@ pub trait Translator {
     fn escape_str(raw: &str) -> String;
 }
 
-struct Extension; // TODO
-
 // TODO: maybe rename
 pub struct DocumentState {
     metadata: HashMap<String, String>,
-    extensions: HashMap<String, Extension>,
+    extensions: HashMap<String, Rc<dyn Extension>>,
     warnings: Vec<String>,
     errors: Vec<String>,
     output_format: OutputFormat,
@@ -35,11 +33,10 @@ pub struct DocumentState {
 impl DocumentState {
     /// create a new empty document state
     pub fn new(output_format: OutputFormat) -> Self {
-        let mut extensions = HashMap::new();
         // todo add some default extensions;
         DocumentState {
             metadata: HashMap::new(),
-            extensions,
+            extensions: get_native_extensions(),
             output_format,
             warnings: vec![],
             errors: vec![],
@@ -57,7 +54,7 @@ impl DocumentState {
                 output.push_str(&format!("{}\n", s))
             }
         }
-        
+
         match self.output_format {
             OutputFormat::Latex => latex::boilerplate(self, &output),
             OutputFormat::Html => html::boilerplate(self, &output),
@@ -68,11 +65,13 @@ impl DocumentState {
     /// translate an extension
     fn translate_extension(
         &mut self,
-        symbol: String,
+        symbol: &str,
         args: Vec<String>,
         variant: ExtensionVariant,
     ) -> Option<String> {
-        todo!()
+        let extension = self.extensions.get(symbol)?.clone();
+        extension.call(args, self.output_format, variant, self) 
+        // TODO: handle errors, and is rc really the right choice?
     }
 
     /// Add a new metadata field to the document state
@@ -84,7 +83,7 @@ impl DocumentState {
     fn translate_block(&mut self, block: Block) -> Option<String> {
         match block {
             Block::Extension(symbol, args) => {
-                self.translate_extension(symbol, args, ExtensionVariant::Block)
+                self.translate_extension(&symbol, args, ExtensionVariant::Block)
             }
             Block::Metadata(symbol, value) => {
                 self.add_metadata(symbol, value);
@@ -113,7 +112,7 @@ impl DocumentState {
     fn translate_inline(&mut self, inline: Inline) -> String {
         if let Inline::Extension(symbol, args) = inline {
             return self
-                .translate_extension(symbol, args, ExtensionVariant::Inline)
+                .translate_extension(&symbol, args, ExtensionVariant::Inline)
                 .unwrap_or("".to_string());
         }
 
@@ -126,9 +125,4 @@ impl DocumentState {
             ),
         };
     }
-}
-
-pub enum ExtensionVariant {
-    Block,
-    Inline,
 }

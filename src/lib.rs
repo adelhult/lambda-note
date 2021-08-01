@@ -1,6 +1,7 @@
 mod extension_manager;
 mod parser;
 mod translator;
+mod extensions;
 
 pub use extension_manager::greet;
 pub use parser::{parse_doc, Block, EscapeChar, Inline, Metadata, Tag};
