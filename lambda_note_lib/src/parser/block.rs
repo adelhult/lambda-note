@@ -1,4 +1,4 @@
-use super::{inline::parse_inline, Block, Lines, Metadata};
+use super::{inline::parse_inline, Block, Lines};
 use lazy_static::lazy_static;
 use regex::Regex;
 

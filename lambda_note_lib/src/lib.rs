@@ -1,11 +1,11 @@
 mod extension_manager;
 mod parser;
+
 mod translator;
 mod extensions;
 
-pub use extension_manager::greet;
-pub use parser::{parse_doc, Block, EscapeChar, Inline, Metadata, Tag};
-pub use translator::{DocumentState, OutputFormat};
+pub use parser::{parse_doc, Block, EscapeChar, Inline, Tag};
+pub use translator::{DocumentState, OutputFormat, Translator, Html, Latex};
 
 #[cfg(test)]
 mod tests {

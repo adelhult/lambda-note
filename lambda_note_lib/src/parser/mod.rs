@@ -236,7 +236,6 @@ impl fmt::Display for EscapeChar {
     }
 }
 
-pub type Metadata = HashMap<String, String>;
 type Lines<'a> = iter::Peekable<str::Lines<'a>>;
 
 pub fn parse_doc(source: &str) -> Vec<Block> {

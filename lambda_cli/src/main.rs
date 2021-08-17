@@ -1,4 +1,4 @@
-use lambda_note_lib::{DocumentState, OutputFormat};
+use lambda_note_lib::{DocumentState, Latex, Html};
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::env;
 use std::fs;
@@ -32,7 +32,7 @@ fn main() {
 
 fn latex(input_file: &PathBuf, output_file: &PathBuf) {
     let content = fs::read_to_string(input_file).expect("Something went wrong reading the file");
-    let mut doc = DocumentState::new(OutputFormat::Latex);
+    let mut doc = DocumentState::new(Latex);
     let result = doc.translate(&content);
 
     fs::write(output_file, result).expect("Unable to write file");
@@ -58,7 +58,7 @@ fn html(input_file: &PathBuf, output_file: &PathBuf) {
                 let content =
                     fs::read_to_string(input_file).expect("Something went wrong reading the file");
 
-                let mut doc = DocumentState::new(OutputFormat::Html);
+                let mut doc = DocumentState::new(Html);
                 let result = doc.translate(&content);
 
                 fs::write(output_file, result).expect("Unable to write file");

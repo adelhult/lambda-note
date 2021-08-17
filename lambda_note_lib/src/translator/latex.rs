@@ -1,13 +1,74 @@
-use crate::EscapeChar;
+use crate::{Block, DocumentState, EscapeChar, Inline, OutputFormat, Tag, Translator};
 
-use super::{Block, DocumentState, Inline, Tag};
+/// A translator that transpiles into LaTeX code.
+pub struct Latex;
 
-pub fn translate_block(state: &mut DocumentState, block: Block) -> Option<String> {
-    match block {
-        Block::Heading(text, lvl) => Some(heading(state.translate_text(text), lvl)),
-        Block::Divider => Some("\\newpage".to_string()),
-        Block::Paragraph(text) => Some(format!("{}\n\n", state.translate_text(text))),
-        _ => None,
+impl Translator for Latex {
+    fn output_format(&self) -> OutputFormat {
+        OutputFormat::Latex
+    }
+
+    fn block(&self, state: &mut DocumentState, block: Block) -> Option<String> {
+        match block {
+            Block::Heading(text, lvl) => Some(heading(state.translate_text(text), lvl)),
+            Block::Divider => Some("\\newpage".to_string()),
+            Block::Paragraph(text) => Some(format!("{}\n\n", state.translate_text(text))),
+            _ => None,
+        }
+    }
+
+    fn inline(&self, inline: Inline) -> String {
+        match inline {
+            Inline::Begin(tag) => format!("\\{}{{", tag_to_string(&tag)),
+            Inline::End(_) => "}".to_string(),
+            Inline::Escaped(escaped) => escape_char(escaped),
+            Inline::Text(content) => self.escape_str(&content),
+            _ => panic!("Failed to translate inline element {:?}", inline),
+        }
+    }
+
+    fn boilerplate(&self, state: &mut DocumentState, content: &str) -> String {
+        format!(
+            r#"
+    \documentclass[12pt]{{{class}}}
+    \usepackage[utf8]{{inputenc}}
+    {imports}
+    \begin{{document}}
+    {top}{content}{bottom}
+    \end{{document}}
+            "#,
+            imports = state
+                .imports
+                .iter()
+                .fold(String::new(), |acc, s| acc + s + "\n"),
+            top = format!("{}\n", state.top),
+            bottom = format!("{}\n", state.bottom),
+            class = state
+                .metadata
+                .get("documentclass")
+                .unwrap_or(&"article".to_string()),
+            content = format!("{}\n", content)
+        )
+    }
+
+    fn escape_str(&self, raw: &str) -> String {
+        raw.chars()
+            .map(|c| match c {
+                '&' => "\\&".to_string(),
+                '%' => "\\%".to_string(),
+                '$' => "\\$".to_string(),
+                '#' => "\\#".to_string(),
+                '_' => "\\_".to_string(),
+                '{' => "\\{".to_string(),
+                '}' => "\\}".to_string(),
+                '>' => "\\textgreater".to_string(),
+                '<' => "\\textless".to_string(),
+                '~' => "\\textasciitilde".to_string(),
+                '^' => "\\textasciicircum".to_string(),
+                '\\' => "\\textbackslash".to_string(),
+                c => c.to_string(),
+            })
+            .collect()
     }
 }
 
@@ -21,37 +82,6 @@ fn heading(text: String, level: u8) -> String {
     }
 }
 
-pub fn translate_inline(inline: Inline) -> String {
-    match inline {
-        Inline::Begin(tag) => format!("\\{}{{", tag_to_string(&tag)),
-        Inline::End(_) => "}".to_string(),
-        Inline::Escaped(escaped) => escape_char(escaped),
-        Inline::Text(content) => escape_str(&content),
-        _ => panic!("Failed to translate inline element {:?}", inline),
-    }
-}
-
-pub fn boilerplate(state: &mut DocumentState, content: &str) -> String {
-    format!(
-        r#"
-\documentclass[12pt]{{{class}}}
-\usepackage[utf8]{{inputenc}}
-{imports}
-\begin{{document}}
-{top}{content}{bottom}
-\end{{document}}
-        "#,
-        imports = state.imports.iter().fold(String::new(), |acc, s| acc + s + "\n"),
-        top = format!("{}\n", state.top),
-        bottom = format!("{}\n", state.bottom),
-        class = state
-            .metadata
-            .get("documentclass")
-            .unwrap_or(&"article".to_string()),
-        content = format!("{}\n", content)
-    )
-}
-
 fn tag_to_string(tag: &Tag) -> String {
     match tag {
         &Tag::Bold => "textbf",
@@ -62,26 +92,6 @@ fn tag_to_string(tag: &Tag) -> String {
         &Tag::Strikethrough => "sout", // todo: needs package!
     }
     .to_string()
-}
-
-fn escape_str(raw: &str) -> String {
-    raw.chars()
-        .map(|c| match c {
-            '&' => "\\&".to_string(),
-            '%' => "\\%".to_string(),
-            '$' => "\\$".to_string(),
-            '#' => "\\#".to_string(),
-            '_' => "\\_".to_string(),
-            '{' => "\\{".to_string(),
-            '}' => "\\}".to_string(),
-            '>' => "\\textgreater".to_string(),
-            '>' => "\\textless".to_string(),
-            '~' => "\\textasciitilde".to_string(),
-            '^' => "\\textasciicircum".to_string(),
-            '\\' => "\\textbackslash".to_string(),
-            c => c.to_string(),
-        })
-        .collect()
 }
 
 fn escape_char(c: EscapeChar) -> String {

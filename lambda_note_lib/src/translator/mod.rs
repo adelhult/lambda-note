@@ -1,14 +1,16 @@
 mod html;
 mod latex;
 
-use super::{parse_doc, Block, Inline, Metadata, Tag};
-use crate::extensions;
-use extensions::{get_native_extensions, Extension, ExtensionVariant};
+use crate::extensions::{get_native_extensions, Extension, ExtensionVariant};
+use crate::{parse_doc, Block, Inline, Tag};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
     rc::Rc,
 };
+
+pub use html::Html;
+pub use latex::Latex;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum OutputFormat {
@@ -18,35 +20,42 @@ pub enum OutputFormat {
 }
 
 pub trait Translator {
-    fn translate_block(state: &mut DocumentState, block: Block) -> Option<String>;
-    fn translate_inline(inline: Inline) -> String;
-    fn boilerplate(state: &mut DocumentState, content: &str) -> String;
-    fn escape_str(raw: &str) -> String;
-}
+    /// Translate a block, returns None if the block does not produce any output
+    fn block(&self, state: &mut DocumentState, block: Block) -> Option<String>;
 
-// TODO: maybe rename
+    /// Translate an inline element
+    fn inline(&self, inline: Inline) -> String;
+
+    /// generate a boilerplate document given the content and the rest of the document state
+    fn boilerplate(&self, state: &mut DocumentState, content: &str) -> String;
+
+    /// escape a str to avoid conflicting with the output format
+    fn escape_str(&self, raw: &str) -> String;
+
+    fn output_format(&self) -> OutputFormat;
+}
 pub struct DocumentState {
     pub metadata: HashMap<String, String>,
+    pub warnings: Vec<String>,
+    pub errors: Vec<String>,
     extensions: HashMap<String, Rc<dyn Extension>>,
+    translator: Rc<dyn Translator>,
     imports: HashSet<String>,
     top: String,
     bottom: String,
-    pub warnings: Vec<String>,
-    pub errors: Vec<String>,
-    output_format: OutputFormat,
 }
 
-impl DocumentState {
-    /// create a new empty document state
-    pub fn new(output_format: OutputFormat) -> Self {
-        // todo add some default extensions;
+impl<'a> DocumentState {
+    /// create a new document state that
+    /// only contains the prelude of native extensions
+    pub fn new<T: 'static + Translator>(translator: T) -> Self {
         DocumentState {
             metadata: HashMap::new(),
             imports: HashSet::new(),
             top: String::new(),
             bottom: String::new(),
             extensions: get_native_extensions(),
-            output_format,
+            translator: Rc::new(translator),
             warnings: vec![],
             errors: vec![],
         }
@@ -76,11 +85,7 @@ impl DocumentState {
             }
         }
 
-        match self.output_format {
-            OutputFormat::Latex => latex::boilerplate(self, &output),
-            OutputFormat::Html => html::boilerplate(self, &output),
-            _ => panic!("Output format not supported"),
-        }
+        self.translator.clone().boilerplate(self, &output)
     }
 
     /// translate an extension
@@ -91,7 +96,7 @@ impl DocumentState {
         variant: ExtensionVariant,
     ) -> Option<String> {
         let extension = self.extensions.get(symbol)?.clone();
-        extension.call(args, self.output_format, variant, self)
+        extension.call(args, self.translator.output_format(), variant, self)
         // TODO: handle errors, and is rc really the right choice?
     }
 
@@ -112,17 +117,7 @@ impl DocumentState {
             }
             // The translation of all other blocks will be delegated
             // to the translator for the current output format
-            _ => match self.output_format {
-                // TODO: these should be compiled based on if a crate feature is enabled
-                // we might not want to bloat the binary with a latex translator if we are
-                // building a web viewer for instance
-                OutputFormat::Html => html::translate_block(self, block),
-                OutputFormat::Latex => latex::translate_block(self, block),
-                _ => panic!(
-                    "The output format {:?} is not supported",
-                    self.output_format
-                ),
-            },
+            _ => self.translator.clone().block(self, block),
         }
     }
 
@@ -137,13 +132,6 @@ impl DocumentState {
                 .unwrap_or("".to_string());
         }
 
-        return match self.output_format {
-            OutputFormat::Html => html::translate_inline(inline),
-            OutputFormat::Latex => latex::translate_inline(inline),
-            _ => panic!(
-                "The output format {:?} is not supported",
-                self.output_format
-            ),
-        };
+        self.translator.inline(inline)
     }
 }
