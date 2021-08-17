@@ -10,28 +10,6 @@ pub use translator::{DocumentState, OutputFormat};
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
-    #[test]
-    fn work_in_progress() {
-        let content =
-            std::fs::read_to_string("test.ln").expect("Something went wrong reading the file");
-
-        let blocks = parse_doc(&content);
-
-        for block in blocks {
-            println!("{}", block);
-        }
-    }
-
-    #[test]
-    fn translation_test() {
-        let content = fs::read_to_string("test.ln").expect("Something went wrong reading the file");
-
-        let mut doc_state = DocumentState::new(OutputFormat::Latex);
-        let output = doc_state.translate(&content);
-
-        fs::write("test.tex", output).expect("Unable to write file");
-    }
 
     #[test]
     fn escape_chars() {
