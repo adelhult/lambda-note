@@ -1,9 +1,15 @@
 mod foreign_extensions;
 mod hidden;
+mod img;
+mod math;
+mod maketitle;
 
 use crate::translator::{DocumentState, OutputFormat};
 use foreign_extensions::ForeignExtension;
 use hidden::Hidden;
+use img::Img;
+use math::Math;
+use maketitle::Maketitle;
 use std::{collections::HashMap, rc::Rc};
 
 
@@ -35,5 +41,8 @@ pub trait Extension {
 pub fn get_native_extensions() -> HashMap<String, Rc<dyn Extension>> {
     let mut map: HashMap<String, Rc<dyn Extension>> = HashMap::new();
     map.insert("hidden".to_string(), Rc::new(Hidden));
+    map.insert("img".to_string(), Rc::new(Img));
+    map.insert("math".to_string(), Rc::new(Math));
+    map.insert("maketitle".to_string(), Rc::new(Maketitle));
     map
 }

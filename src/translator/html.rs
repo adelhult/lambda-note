@@ -34,13 +34,42 @@ pub fn boilerplate(state: &mut DocumentState, content: &str) -> String {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {imports}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet"> 
+    <style>
+        html, body, h1,h2,h3,h4,h5,h6 {{
+            font-family: 'Inter', sans-serif;
+        }}
+        .content {{
+            margin-left:auto;
+            margin-right:auto;
+            max-width:1000px;
+        }}
+        
+        img {{
+            max-width:100%;
+            text-align:center;
+        }}
+    </style>
     <title>{title}</title>
 </head>
 <body>
-    {content}
+    <div class="content">
+        {top}
+        {content}
+        {bottom}
+    </div>
 </body>
 </html>
 "#,
+        imports = state
+            .imports
+            .iter()
+            .fold(String::new(), |acc, s| acc + s + "\n"),
+        top = state.top,
+        bottom = state.bottom,
         language = state.metadata.get("language").unwrap_or(&"en".to_string()),
         title = state
             .metadata

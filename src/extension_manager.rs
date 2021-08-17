@@ -1,6 +1,5 @@
 use super::OutputFormat;
 use serde::{Deserialize, Serialize};
-use std::io::{self, Write};
 
 #[derive(Serialize)]
 pub struct HelloRequest  {
@@ -35,3 +34,4 @@ pub struct HelloResponse {
 pub fn greet() -> String {
     serde_json::to_string(&HelloRequest::new(OutputFormat::Html)).unwrap()
 }
+

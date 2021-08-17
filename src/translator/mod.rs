@@ -5,7 +5,10 @@ use super::{parse_doc, Block, Inline, Metadata, Tag};
 use crate::extensions;
 use extensions::{get_native_extensions, Extension, ExtensionVariant};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum OutputFormat {
@@ -23,8 +26,11 @@ pub trait Translator {
 
 // TODO: maybe rename
 pub struct DocumentState {
-    metadata: HashMap<String, String>,
+    pub metadata: HashMap<String, String>,
     extensions: HashMap<String, Rc<dyn Extension>>,
+    imports: HashSet<String>,
+    top: String,
+    bottom: String,
     warnings: Vec<String>,
     errors: Vec<String>,
     output_format: OutputFormat,
@@ -36,11 +42,26 @@ impl DocumentState {
         // todo add some default extensions;
         DocumentState {
             metadata: HashMap::new(),
+            imports: HashSet::new(),
+            top: String::new(),
+            bottom: String::new(),
             extensions: get_native_extensions(),
             output_format,
             warnings: vec![],
             errors: vec![],
         }
+    }
+
+    pub fn add_warning(&mut self, warning: &str) {
+        self.warnings.push(warning.to_string());
+    }
+
+    pub fn add_error(&mut self, error: &str) {
+        self.errors.push(error.to_string());
+    }
+
+    pub fn import(&mut self, import: &str) {
+        self.imports.insert(import.to_string());
     }
 
     /// Given the current document state translate the source text
@@ -70,7 +91,7 @@ impl DocumentState {
         variant: ExtensionVariant,
     ) -> Option<String> {
         let extension = self.extensions.get(symbol)?.clone();
-        extension.call(args, self.output_format, variant, self) 
+        extension.call(args, self.output_format, variant, self)
         // TODO: handle errors, and is rc really the right choice?
     }
 

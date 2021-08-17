@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::extensions::{Extension, ExtensionVariant};
 use crate::translator::{DocumentState, OutputFormat};
 
