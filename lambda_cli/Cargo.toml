@@ -1,0 +1,9 @@
+[package]
+name = "lambda_cli"
+version = "0.1.0"
+authors = ["Eli Adelhult <hello@eli.nu>"]
+edition = "2018"
+
+[dependencies]
+"lambda_note_lib" = {path = "../lambda_note_lib"}
+"notify" = "4.0.17"

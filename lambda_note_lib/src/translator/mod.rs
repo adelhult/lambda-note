@@ -31,8 +31,8 @@ pub struct DocumentState {
     imports: HashSet<String>,
     top: String,
     bottom: String,
-    warnings: Vec<String>,
-    errors: Vec<String>,
+    pub warnings: Vec<String>,
+    pub errors: Vec<String>,
     output_format: OutputFormat,
 }
 
