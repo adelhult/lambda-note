@@ -50,7 +50,7 @@ fn parse_extension(lines: &mut Lines) -> Option<Block> {
     let line = lines.peek()?;
     let captures = RULE.captures(line)?;
     let divider_length = captures.name("div")?.as_str().chars().count();
-    let ident = captures.name("ident")?.as_str().to_string();
+    let ident = captures.name("ident")?.as_str().trim().to_string();
 
     // collect the arguments into a Vec<String>
     let mut arguments = captures.name("args").map_or_else(

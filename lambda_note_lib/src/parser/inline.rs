@@ -145,7 +145,7 @@ fn extension(state: &mut ParserState) {
     let argv: Vec<String> = content.split(",").map(|s| s.to_string()).collect();
     state
         .result
-        .push(Inline::Extension(argv[0].clone(), argv[1..].to_vec()));
+        .push(Inline::Extension(argv[0].trim().to_string(), argv[1..].to_vec()));
 }
 
 /// Handle potential start and end tags
