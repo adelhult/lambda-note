@@ -1,4 +1,3 @@
-mod extension_manager;
 mod parser;
 
 mod translator;
