@@ -45,20 +45,33 @@ impl Translator for Html {
         {imports}
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet"> 
-        <style>
-            html, body, h1,h2,h3,h4,h5,h6 {{
-                font-family: 'Inter', sans-serif;
+        <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"> 
+        <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet"> 
+            <style>
+            html, body, h1, h2, h3, h4, h5, h6 {{
+                font-family: 'Open Sans', sans-serif;
             }}
+
             .content {{
+                margin-top:2rem;
+                margin-bottom:4rem;
                 margin-left:auto;
                 margin-right:auto;
-                max-width:1000px;
+                max-width:700px;
             }}
-            
+
             img {{
                 max-width:100%;
                 text-align:center;
+            }}
+
+
+            pre {{
+                padding:0.8rem;
+                font-family: 'Fira Code', monospace;
+                box-sizing:border-box;
+                font-size:0.9rem;
+                border-radius:0.2rem;
             }}
         </style>
         <title>{title}</title>
