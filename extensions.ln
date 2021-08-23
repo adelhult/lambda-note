@@ -1,0 +1,88 @@
+# General improvements
+## Metadata interests
+Modules that are interested in metadata should be
+able to be interested in anything starting with a perticular prefix.
+
+I suggest that i implement support of metadata queries 
+such as "some_prefix*".
+
+## Ergonomic features
+You should not need to write x\^^2^^. It should be enough to write x\^2.
+
+There should also be nicer ways to get \\endash and \\emdash by writing
+-- and ---.
+
+# Planned extensions
+A list of ideas for built-in extensions.
+
+## include
+include a lambda note file or perhaps also other files
+
+## define/extension
+define extensions
+
+## alias
+Rename symbols, works somewhat like C's
+define macro.
+
+## uppercase
+Makes text uppercase. Should be a proper macro
+that outputs lambda note code so we can use formatting inside of these
+blocks as well. 
+-------- code ---------------------
+--- uppercase
+You should be able to write stuff
+like **this**.
+---
+-----------------------------------
+
+## lowercase
+Makes text lowercase. Should work in the
+same way as the **uppercase** extension.
+
+## table of contents
+Generates a table of content. Should use a built-in
+metadata field named something like __document_headings__.
+I think the parser needs to be rewritten to accomplish this.
+
+## cite
+Used to cite and generate a list of all the cited material
+
+## calc
+Used to evaluate simple math expression like \|calc, 5 * 8 * PI|.
+It should be possible to define constants/variables either in extension blocks
+or as a metadata field. I think metadata fields would be nicer but I am not sure yet. 
+
+## ~~img~~
+Add images
+
+TODO: ensure the html and latex options work the same
+
+## link
+Create hyperlinks 
+
+## code (currently working on)
+Syntax highlight code
+
+## uri/path
+add file system paths or uri:s
+
+## unescape
+Text that's not escaped by the translator (to include things like raw html/latex).
+
+## raw/escape/indentiy 
+just raw text to avoid lambda note's syntax getting in the way
+
+## abstract
+Generate an abstract. Should take the language field into account too.
+
+## ~~make title~~
+Generate a title page based on the author, date and title metadata fields.
+
+TODO: this module should be renamed and support a titlepage_template metadata field. 
+
+## ~~math~~
+Typeset TeX math.
+
+## ~~hidden~~
+remove the contents from the output
