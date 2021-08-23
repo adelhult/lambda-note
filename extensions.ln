@@ -3,7 +3,7 @@
 Modules that are interested in metadata should be
 able to be interested in anything starting with a perticular prefix.
 
-I suggest that i implement support of metadata queries 
+I suggest that I implement support of metadata queries 
 such as "some_prefix*".
 
 ## Ergonomic features
@@ -42,7 +42,7 @@ same way as the **uppercase** extension.
 
 ## table of contents
 Generates a table of content. Should use a built-in
-metadata field named something like __document_headings__.
+metadata field named something like \__document_headings__.
 I think the parser needs to be rewritten to accomplish this.
 
 ## cite
