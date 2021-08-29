@@ -1,0 +1,25 @@
+{
+    "name": "lambda-note-syntax",
+    "displayName": "Lambda note syntax",
+    "description": "Lambda note syntax support",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.59.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "lambdanote",
+            "aliases": ["Lambda note", "lambdanote"],
+            "extensions": [".ln"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "lambdanote",
+            "scopeName": "source.lambdanote",
+            "path": "./syntaxes/lambdanote.tmLanguage.json"
+        }]
+    }
+}
