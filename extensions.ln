@@ -61,13 +61,13 @@ TODO: ensure the html and latex options work the same
 ## link
 Create hyperlinks 
 
-## code (currently working on)
+## ~~code~~
 Syntax highlight code
 
 ## uri/path
 add file system paths or uri:s
 
-## conditional
+## ~~conditional~~
 includes the body if certain conditions are met, like platform and/or output format
 
 ## unescape
