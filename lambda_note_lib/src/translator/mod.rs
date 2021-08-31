@@ -12,7 +12,7 @@ use std::{
 pub use html::Html;
 pub use latex::Latex;
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OutputFormat {
     LambdaNote,
     Html,
