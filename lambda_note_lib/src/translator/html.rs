@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use super::{Block, DocumentState, Inline, OutputFormat, Tag, Translator};
 
 /// A translator that transpiles into HTML code
@@ -34,7 +36,14 @@ impl Translator for Html {
         }
     }
 
-    fn boilerplate(&self, state: &mut DocumentState, content: &str) -> String {
+    fn boilerplate(
+        &self,
+        content: &str,
+        top: &str,
+        bottom: &str,
+        imports: &HashSet<String>,
+        metadata: &HashMap<String, String>,
+    ) -> String {
         format!(
             r#"
     <!DOCTYPE html>
@@ -85,17 +94,11 @@ impl Translator for Html {
     </body>
     </html>
     "#,
-            imports = state
-                .imports
-                .iter()
-                .fold(String::new(), |acc, s| acc + s + "\n"),
-            top = state.top,
-            bottom = state.bottom,
-            language = state.metadata.get("language").unwrap_or(&"en".to_string()),
-            title = state
-                .metadata
-                .get("title")
-                .unwrap_or(&"Document".to_string()),
+            imports = imports.iter().fold(String::new(), |acc, s| acc + s + "\n"),
+            top = top,
+            bottom = bottom,
+            language = metadata.get("language").unwrap_or(&"en".to_string()),
+            title = metadata.get("title").unwrap_or(&"Document".to_string()),
             content = content
         )
     }
