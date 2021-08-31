@@ -67,6 +67,9 @@ Syntax highlight code
 ## uri/path
 add file system paths or uri:s
 
+## conditional
+includes the body if certain conditions are met, like platform and/or output format
+
 ## unescape
 Text that's not escaped by the translator (to include things like raw html/latex).
 

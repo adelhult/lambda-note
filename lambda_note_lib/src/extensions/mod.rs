@@ -3,6 +3,7 @@ mod img;
 mod math;
 mod maketitle;
 mod code;
+mod conditional;
 
 use crate::translator::{DocumentState, OutputFormat};
 use hidden::Hidden;
@@ -10,6 +11,7 @@ use img::Img;
 use math::Math;
 use code::Code;
 use maketitle::Maketitle;
+use conditional::Conditional;
 use std::{collections::HashMap, rc::Rc};
 
 
@@ -45,5 +47,6 @@ pub fn get_native_extensions() -> HashMap<String, Rc<dyn Extension>> {
     map.insert("math".to_string(), Rc::new(Math));
     map.insert("maketitle".to_string(), Rc::new(Maketitle));
     map.insert("code".to_string(), Rc::new(Code));
+    map.insert("conditional".to_string(), Rc::new(Conditional));
     map
 }
