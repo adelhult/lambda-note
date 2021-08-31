@@ -26,17 +26,17 @@ pub struct Conditional;
 
 impl Extension for Conditional {
     fn name(&self) -> String {
-        "Img".to_string()
+        "Conditional".to_string()
     }
 
     fn description(&self) -> String {
         "Includes a block if conditions are met.\n\
         \n\
         Usage:\n\
-        |if, You are not using HTML, file != html|\n\
+        |conditional, You are not using HTML, file != html|\n\
         \n\
         or as a block...\n\
-        ---- if, one of, os = mac, type = latex ----\n\
+        ---- conditional, one of, os = mac, type = latex ----\n\
         you are probably not viewing this in Internet Explorer...\n\
         ----"
             .to_string()
