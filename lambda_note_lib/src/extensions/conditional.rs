@@ -144,7 +144,11 @@ fn parse_expr(text: &str, state: &mut DocumentState) -> Option<Expression> {
         if key.starts_with("conditional_") {
             if let Some(val_capture) = CONDITIONAL_PATTERN.captures(text) {
                 if let Some(search_val) = val_capture.get(1) {
-                    Some(Expression::StringEquality(key, search_val.as_str().to_string(), xnor))
+                    Some(Expression::StringEquality(
+                        key,
+                        search_val.as_str().to_string(),
+                        xnor,
+                    ))
                 } else {
                     state.add_error(&format!(
                         "Could not find value to search for with key {}",
@@ -188,7 +192,9 @@ fn parse_expr(text: &str, state: &mut DocumentState) -> Option<Expression> {
                         None
                     }
                 }
-            } else if ["target", "output", "file", "type", "extension", "format"].contains(&key.as_str()) {
+            } else if ["target", "output", "file", "type", "extension", "format"]
+                .contains(&key.as_str())
+            {
                 match val.as_str() {
                     "html" => Some(Expression::OutputEquality(OutputFormat::Html, xnor)),
                     "latex" | "tex" => Some(Expression::OutputEquality(OutputFormat::Latex, xnor)),
@@ -240,7 +246,16 @@ impl Expression {
         document_state: &mut DocumentState,
     ) -> bool {
         match self {
-            Self::PlatformEquality(platform, xnor) => (*platform == document_platform) ^ (!xnor),
+            Self::PlatformEquality(platform, xnor) => {
+                if platform == &Platform::Unix(UnixVariant::Other) {
+                    match document_platform {
+                        Platform::Unix(_) => *xnor,
+                        _ => !*xnor,
+                    }
+                } else {
+                    (*platform == document_platform) ^ (!xnor)
+                }
+            }
             Self::OutputEquality(format, xnor) => (*format == document_format) ^ (!xnor),
             Self::StringEquality(key, value, xnor) => {
                 if let Some(val) = document_state.metadata.get(key) {
