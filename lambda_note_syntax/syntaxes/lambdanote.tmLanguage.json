@@ -68,7 +68,7 @@
         },
 		{
 			"name": "constant.character.escape.lambdanote",
-			"match": "\\\\(alpha|beta|gamma|Gamma|(D|d)elta|(var)?epsilon|zeta|eta|(vart|t|T)heta|iota|kappa|(l|L)ambda|mu|nu|xi|Xi|pi|Pi|(var)?rho|sigma|Sigma|tau|[uU]psilon|(p|P|varp)hi|chi|[pP]si|[oO]mega|endash|emdash|[rR]ight|[lL]eft|[uU]p|[dD]own|\\*|\\^|/|=|~|\\|:|tableflip)"
+			"match": "\\\\(alpha|beta|[Gg]amma|[Dd]elta|(var)?epsilon|z?eta|[Tt]heta|vartheta|iota|kappa|[Ll]ambda|mu|nu|[Xx]i|[Pp]i|(var)?rho|[Ss]igma|tau|[Uu]psilon|[Pp]hi|varphi|chi|[Pp]si|[Oo]mega|endash|emdash|[Rr]ight|[Ll]eft|[Uu]p|[Dd]own|\\*|\\^|/|=|~|\\|:|tableflip)"
 		},
         {
             "name": "markup.bold.lambdanote",
