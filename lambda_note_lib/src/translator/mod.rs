@@ -77,15 +77,19 @@ impl<'a> DocumentState {
     /// and mutate the state if a new extensions or metadata fields
     /// are found
     pub fn translate(&mut self, source: &str) -> String {
-        let mut output = String::new();
+        self.translator.clone().boilerplate(self, self.translate_no_boilerplate(source))
+    }
 
+    pub fn translate_no_boilerplate(&mut self, source &str) -> String {
+        let mut output = String::new();
+        
         for block in parse_doc(source) {
             if let Some(s) = self.translate_block(block) {
                 output.push_str(&format!("{}\n", s))
             }
         }
 
-        self.translator.clone().boilerplate(self, &output)
+        output
     }
 
     /// translate an extension
