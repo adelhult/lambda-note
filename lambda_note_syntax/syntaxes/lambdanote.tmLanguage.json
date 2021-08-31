@@ -1,25 +1,102 @@
 {
-	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-	"name": "Lambda note",
-	"patterns": [
-		{"include": "#block"},
-		{"include": "#inline"}
-	],
-	"repository": {
-		"block": {
-			"patterns": [
-				{"include": "#block-extension"},
-				{"include": "#heading"},
-				{"include": "#metadata"},
-				{"include": "#divider"}
-			]
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "λnote",
+    "patterns": [
+        {
+            "name": "markup.heading.lambdanote",
+            "match": "^#+[ \t]+(.+)$",
+			"captures": {
+				"1": {
+					"name": "meta.heading.content.lambdanote"
+				}
+			}
+        },
+        {
+            "name": "meta.extension.lambdanote",
+            "match": "(\\|)([^,]*?)(?:,(.*?))?(?:,(.*?))*(?<!\\\\)(\\|)",
+            "captures": {
+                "1": {
+                    "name": "meta.opening-bracket.lambdanote"
+                },
+                "2": {
+                    "name": "entity.name.function.lambdanote"
+                },
+                "3": {
+                    "name": "variable.parameter.extension-arg0.lambdanote"
+                },
+                "4": {
+                    "name": "variable.parameter.extension-args.lambdanote"
+                },
+                "5": {
+                    "name": "meta.opening-bracket.lambdanote"
+                }
+            }
+        },
+        {
+            "name": "entity.name.function.lambdanote",
+            "begin": "(?:^|\n)(-{3,})[ \t]*(\\w[^\n,]*?)(?:,(.*?))?[ \t]*(-*)\\s*\n",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.type.extension-name.lambdanote"
+                },
+                "3": {
+                    "name": "meta.variable.parameter.extension-args.lambdanote",
+                    "patterns": [
+                        {"match": ".", "name": "variable.parameter.extension-args.lambdanote"}
+                    ]
+                }
+            },
+
+            "end": "^(\\1-*)\\s*?(?=$|\n)"
+            
+        },
+		{
+            "name": "keyword.control.lambdanote",
+            "match": "^[ \t]*={3,}[ \t]*"
+        },	
+        {
+            "name": "entity.name.function.lambdanote",
+            "match": "^::[ \t]*(\\w+)[ \t]*=[ \t]*(.+)",
+			"captures": {
+				"1": {
+					"name": "meta.metadata.key.lambdanote"
+				},
+				"2": {
+					"name": "meta.metadata.value.lambdanote"
+				}
+			}
+        },
+		{
+			"name": "constant.character.escape.lambdanote",
+			"match": "\\\\(alpha|beta|gamma|Gamma|(D|d)elta|(var)?epsilon|zeta|eta|(vart|t|T)heta|iota|kappa|(l|L)ambda|mu|nu|xi|Xi|pi|Pi|(var)?rho|sigma|Sigma|tau|[uU]psilon|(p|P|varp)hi|chi|[pP]si|[oO]mega|endash|emdash|[rR]ight|[lL]eft|[uU]p|[dD]own|\\*|\\^|/|=|~|\\|:|tableflip)"
 		},
-		"inline": {
-			"patterns": [
-				{"include": "#inline-extension"},
-				{"include": "#styled-expression"}
-			]
-		}
-	},
-	"scopeName": "source.lambdanote"
+        {
+            "name": "markup.bold.lambdanote",
+            "match": "==(.+)=="
+        },
+        {
+            "name": "markup.bold.lambdanote",
+            "match": "\\*\\*(.+)\\*\\*"
+        },
+        {
+            "name": "markup.italic.lambdanote",
+            "match": "//(.+)//"
+        },
+        {
+            "name": "markup.bold.subscript.lambdanote",
+            "match": "__(.+)__"
+        },
+        {
+            "name": "markup.bold.superscript.lambdanote",
+            "match": "\\^\\^(.+)\\^\\^"
+        },
+        {
+            "name": "markup.bold.strikethrough.lambdanote",
+            "match": "~~(.+)~~"
+        }
+
+    ],
+    "repository": {
+    },
+    "scopeName": "source.lambdanote"
 }

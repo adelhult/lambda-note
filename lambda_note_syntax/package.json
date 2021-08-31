@@ -12,7 +12,7 @@
     "contributes": {
         "languages": [{
             "id": "lambdanote",
-            "aliases": ["Lambda note", "lambdanote"],
+            "aliases": ["λnote", "Lambda note", "lambdanote"],
             "extensions": [".ln"],
             "configuration": "./language-configuration.json"
         }],
