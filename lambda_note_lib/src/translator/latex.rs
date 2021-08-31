@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use crate::{Block, DocumentState, EscapeChar, Inline, OutputFormat, Tag, Translator};
 
 /// A translator that transpiles into LaTeX code.
@@ -27,7 +29,14 @@ impl Translator for Latex {
         }
     }
 
-    fn boilerplate(&self, state: &mut DocumentState, content: &str) -> String {
+    fn boilerplate(
+        &self,
+        content: &str,
+        top: &str,
+        bottom: &str,
+        imports: &HashSet<String>,
+        metadata: &HashMap<String, String>,
+    ) -> String {
         format!(
             r#"
     \documentclass[12pt]{{{class}}}
@@ -37,14 +46,10 @@ impl Translator for Latex {
     {top}{content}{bottom}
     \end{{document}}
             "#,
-            imports = state
-                .imports
-                .iter()
-                .fold(String::new(), |acc, s| acc + s + "\n"),
-            top = format!("{}\n", state.top),
-            bottom = format!("{}\n", state.bottom),
-            class = state
-                .metadata
+            imports = imports.iter().fold(String::new(), |acc, s| acc + s + "\n"),
+            top = format!("{}\n", top),
+            bottom = format!("{}\n", bottom),
+            class = metadata
                 .get("documentclass")
                 .unwrap_or(&"article".to_string()),
             content = format!("{}\n", content)
