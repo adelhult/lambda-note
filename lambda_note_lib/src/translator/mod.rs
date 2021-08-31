@@ -27,7 +27,14 @@ pub trait Translator {
     fn inline(&self, inline: Inline) -> String;
 
     /// generate a boilerplate document given the content and the rest of the document state
-    fn boilerplate(&self, state: &mut DocumentState, content: &str) -> String;
+    fn boilerplate(
+        &self,
+        content: &str,
+        top: &str,
+        bottom: &str,
+        imports: &HashSet<String>,
+        metadata: &HashMap<String, String>,
+    ) -> String;
 
     /// escape a str to avoid conflicting with the output format
     fn escape_str(&self, raw: &str) -> String;
@@ -77,12 +84,21 @@ impl<'a> DocumentState {
     /// and mutate the state if a new extensions or metadata fields
     /// are found
     pub fn translate(&mut self, source: &str) -> String {
-        self.translator.clone().boilerplate(self, self.translate_no_boilerplate(source))
+        let result = self.translate_no_boilerplate(source);
+        // TODO: the translator should not be cloned,
+        // there is def. a better way to do this.
+        self.translator.boilerplate(
+            &result,
+            &self.top,
+            &self.bottom,
+            &self.imports,
+            &self.metadata,
+        )
     }
 
-    pub fn translate_no_boilerplate(&mut self, source &str) -> String {
+    pub fn translate_no_boilerplate(&mut self, source: &str) -> String {
         let mut output = String::new();
-        
+
         for block in parse_doc(source) {
             if let Some(s) = self.translate_block(block) {
                 output.push_str(&format!("{}\n", s))
