@@ -12,38 +12,32 @@
 			}
         },
         {
-            "name": "meta.extension.lambdanote",
-            "match": "(\\|)([^,]*?)(?:,(.*?))?(?:,(.*?))*(?<!\\\\)(\\|)",
+            "name": "meta.inline-extension.lambdanote",
+            "match": "(\\|)([^,]*?)(?:,(.*?))?(?<!\\\\)(\\|)",
             "captures": {
                 "1": {
                     "name": "meta.opening-bracket.lambdanote"
                 },
                 "2": {
-                    "name": "entity.name.function.lambdanote"
+                    "name": "entity.name.type.extension-name.lambdanote"
                 },
                 "3": {
-                    "name": "variable.parameter.extension-arg0.lambdanote"
-                },
-                "4": {
                     "name": "variable.parameter.extension-args.lambdanote"
                 },
-                "5": {
+                "4": {
                     "name": "meta.opening-bracket.lambdanote"
                 }
             }
         },
         {
-            "name": "entity.name.function.lambdanote",
+            "name": "meta.block-extension.lambdanote",
             "begin": "(?:^|\n)(-{3,})[ \t]*(\\w[^\n,]*?)(?:,(.*?))?[ \t]*(-*)\\s*\n",
             "beginCaptures": {
                 "2": {
                     "name": "entity.name.type.extension-name.lambdanote"
                 },
                 "3": {
-                    "name": "meta.variable.parameter.extension-args.lambdanote",
-                    "patterns": [
-                        {"match": ".", "name": "variable.parameter.extension-args.lambdanote"}
-                    ]
+                    "name": "variable.parameter.extension-args.lambdanote"
                 }
             },
 
@@ -55,7 +49,7 @@
             "match": "^[ \t]*={3,}[ \t]*"
         },	
         {
-            "name": "entity.name.function.lambdanote",
+            "name": "comment.line.metadata.lambdanote",
             "match": "^::[ \t]*(\\w+)[ \t]*=[ \t]*(.+)",
 			"captures": {
 				"1": {
@@ -68,31 +62,36 @@
         },
 		{
 			"name": "constant.character.escape.lambdanote",
-			"match": "\\\\(alpha|beta|[Gg]amma|[Dd]elta|(var)?epsilon|z?eta|[Tt]heta|vartheta|iota|kappa|[Ll]ambda|mu|nu|[Xx]i|[Pp]i|(var)?rho|[Ss]igma|tau|[Uu]psilon|[Pp]hi|varphi|chi|[Pp]si|[Oo]mega|endash|emdash|[Rr]ight|[Ll]eft|[Uu]p|[Dd]own|\\*|\\^|/|=|~|\\|:|tableflip)"
+			"match": "\\\\(alpha|beta|[Gg]amma|[Dd]elta|(var)?epsilon|z?eta|[Tt]heta|vartheta|iota|kappa|[Ll]ambda|mu|nu|[Xx]i|[Pp]i|(var)?rho|[Ss]igma|tau|[Uu]psilon|[Pp]hi|varphi|chi|[Pp]si|[Oo]mega|endash|emdash|[Rr]ight|[Ll]eft|[Uu]p|[Dd]own|\\*|\\^|/|=|~|\\|:|_|tableflip)"
 		},
         {
-            "name": "markup.bold.lambdanote",
-            "match": "==(.+)=="
+            "name": "meta.markup.underline.lambdanote",
+            "match": "==([^ ](:?.*)[^ ]|[^ ]{1,2})==",
+            "captures": {
+                "1": {
+                    "name": "markup.underline.lambdanote"
+                }
+            }
         },
         {
             "name": "markup.bold.lambdanote",
-            "match": "\\*\\*(.+)\\*\\*"
+            "match": "\\*\\*([^ ](:?.*)[^ ]|[^ ]{1,2})\\*\\*"
         },
         {
             "name": "markup.italic.lambdanote",
-            "match": "//(.+)//"
+            "match": "//([^ ](:?.*)[^ ]|[^ ]{1,2})//"
         },
         {
             "name": "markup.bold.subscript.lambdanote",
-            "match": "__(.+)__"
+            "match": "__([^ ](:?.*)[^ ]|[^ ]{1,2})__"
         },
         {
             "name": "markup.bold.superscript.lambdanote",
-            "match": "\\^\\^(.+)\\^\\^"
+            "match": "\\^\\^([^ ](:?.*)[^ ]|[^ ]{1,2})\\^\\^"
         },
         {
             "name": "markup.bold.strikethrough.lambdanote",
-            "match": "~~(.+)~~"
+            "match": "~~([^ ](:?.*)[^ ]|[^ ]{1,2})~~"
         }
 
     ],

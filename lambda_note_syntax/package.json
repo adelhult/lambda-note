@@ -1,8 +1,16 @@
 {
     "name": "lambda-note-syntax",
-    "displayName": "Lambda note syntax",
-    "description": "Lambda note syntax support",
+    "displayName": "λnote syntax",
+    "description": "λnote syntax support",
     "version": "0.0.1",
+    "license": "MIT",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/adelhult/lambda-note"
+    },
+    "homepage": "https://github.com/adelhult/lambda-note",
+    "keywords": ["Lambda note", "markup", "syntax"],
     "engines": {
         "vscode": "^1.59.0"
     },
