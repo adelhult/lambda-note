@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 "lambda_note_lib" = {path = "../lambda_note_lib"}
 "notify" = "4.0.17"
+tempfile = "3.2.0"
