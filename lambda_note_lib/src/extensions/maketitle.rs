@@ -73,7 +73,7 @@ fn latex(state: &mut DocumentState) -> Option<String> {
             defines.push_str(&format!("\\{}{{{}}}\n", field, value));
         }
     }
-
+    state.import(&defines);
     Some("\\maketitle".to_string())
 }
 
