@@ -1,12 +1,10 @@
-<center>
+<p align="center">
     <br/>
     <img src="logo.svg" width="250px"/>
     <br/>
-    <br/>
     A simple, <strong>highly extendable</strong>, markup language
     inspired by markdown and org mode.
-    <br/>
-</center>
+</p>
 
 # Syntax and usage
 
