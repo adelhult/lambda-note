@@ -1,9 +1,9 @@
 <p align="center">
-    <br/>
-    <img src="logo.svg" width="250px"/>
-    <br/>
+    <img src="logo_banner.png" width="500px"/><br/>
     A simple, <strong>highly extendable</strong>, markup language
     inspired by markdown and org mode.
+    <br/>
+    <br/>
 </p>
 
 # Syntax and usage
