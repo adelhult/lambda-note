@@ -126,13 +126,13 @@ impl Translator for Html {
 }
 
 fn tag_to_string(tag: &Tag) -> String {
-    match tag {
-        &Tag::Bold => "strong",
-        &Tag::Italic => "em",
-        &Tag::Underline => "ins",
-        &Tag::Superscript => "sup",
-        &Tag::Subscript => "sub",
-        &Tag::Strikethrough => "del",
+    match *tag {
+        Tag::Bold => "strong",
+        Tag::Italic => "em",
+        Tag::Underline => "ins",
+        Tag::Superscript => "sup",
+        Tag::Subscript => "sub",
+        Tag::Strikethrough => "del",
     }
     .to_string()
 }

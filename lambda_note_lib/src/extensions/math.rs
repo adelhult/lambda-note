@@ -1,7 +1,6 @@
 use crate::extensions::{Extension, ExtensionVariant};
 use crate::translator::{DocumentState, OutputFormat};
 use latex2mathml::{latex_to_mathml, DisplayStyle};
-use std::collections::HashMap;
 /// **Native extension**: make math equations
 /// TODO: handle errors
 #[derive(Clone)]
@@ -68,7 +67,7 @@ fn html(
 fn latex(
     args: Vec<String>,
     variant: ExtensionVariant,
-    state: &mut DocumentState,
+    _: &mut DocumentState,
 ) -> Option<String> {
     let value = args.get(0).map_or_else(|| "", |content| content);
     Some(match variant {

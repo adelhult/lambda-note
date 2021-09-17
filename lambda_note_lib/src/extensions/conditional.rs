@@ -50,10 +50,10 @@ impl Extension for Conditional {
         &self,
         args: Vec<String>,
         fmt: OutputFormat,
-        variant: ExtensionVariant,
+        _: ExtensionVariant,
         state: &mut DocumentState,
     ) -> Option<String> {
-        if args.len() == 0 {
+        if args.is_empty() {
             return None;
         }
         let body_index = 0;
@@ -65,7 +65,7 @@ impl Extension for Conditional {
             if pos == body_index {
                 continue;
             }
-            match parse(&arg.as_str(), state) {
+            match parse(arg.as_str(), state) {
                 Some(ParseResult::Expr(expr)) => exprs.push(expr),
                 Some(ParseResult::Rule(rule)) => and = rule == ExpressionRule::BooleanAnd,
                 None => failed = true,
@@ -108,11 +108,11 @@ impl Extension for Conditional {
 fn parse(text: &str, state: &mut DocumentState) -> Option<ParseResult> {
     if let Some(rule) = parse_special(text) {
         Some(ParseResult::Rule(rule))
-    } else if let Some(expr) = parse_expr(text, state) {
-        Some(ParseResult::Expr(expr))
     } else {
-        None
+        parse_expr(text, state).map(ParseResult::Expr)
     }
+
+    
 }
 
 fn parse_special(text: &str) -> Option<ExpressionRule> {
@@ -259,10 +259,10 @@ impl Expression {
             Self::OutputEquality(format, xnor) => (*format == document_format) ^ (!xnor),
             Self::StringEquality(key, value, xnor) => {
                 if let Some(val) = document_state.metadata.get(key) {
-                    return (val == value) ^ (!xnor);
+                    (val == value) ^ (!xnor)
                 } else {
                     document_state.add_warning(&format!("Key {} doesn't exist!", key));
-                    return !xnor;
+                    !xnor
                 }
             }
         }

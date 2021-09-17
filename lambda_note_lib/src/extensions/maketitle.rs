@@ -1,6 +1,5 @@
 use crate::extensions::{Extension, ExtensionVariant};
 use crate::translator::{DocumentState, OutputFormat};
-use std::collections::HashMap;
 
 /// **Native extension**: generate titlepages just like in latex
 #[derive(Clone)]

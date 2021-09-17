@@ -10,7 +10,7 @@ use std::{iter::Peekable, str::Chars};
 
 /// Parse a string slice into a vector of
 /// all the inline elements found inside of it.
-pub fn parse_inline<'a>(source: &'a str) -> Vec<Inline> {
+pub fn parse_inline(source: &str) -> Vec<Inline> {
     let mut state = ParserState::new(source);
 
     while let Some(current) = state.chars.next() {
@@ -142,7 +142,7 @@ fn extension(state: &mut ParserState) {
 
     state.push_buffer();
 
-    let argv: Vec<String> = content.split(",").map(|s| s.to_string()).collect();
+    let argv: Vec<String> = content.split(',').map(|s| s.to_string()).collect();
     state
         .result
         .push(Inline::Extension(argv[0].trim().to_string(), argv[1..].to_vec()));

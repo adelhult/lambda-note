@@ -37,8 +37,8 @@ impl Extension for Img {
     ) -> Option<String> {
         match fmt {
             OutputFormat::LambdaNote => todo!(),
-            OutputFormat::Html => html(args, variant, self.interests(), state),
-            OutputFormat::Latex => latex(args, variant, self.interests(), state),
+            OutputFormat::Html => html(args, variant, state),
+            OutputFormat::Latex => latex(args, variant, state),
         }
     }
 
@@ -58,11 +58,10 @@ impl Extension for Img {
 fn html(
     args: Vec<String>,
     variant: ExtensionVariant,
-    interests: Vec<String>,
     state: &mut DocumentState,
 ) -> Option<String> {
-    let mut alt: Option<&String>;
-    let mut src: Option<&String>;
+    let alt: Option<&String>;
+    let src: Option<&String>;
 
     match variant {
         ExtensionVariant::Block => {
@@ -91,13 +90,12 @@ fn html(
 fn latex(
     args: Vec<String>,
     variant: ExtensionVariant,
-    interests: Vec<String>,
     state: &mut DocumentState,
 ) -> Option<String> {
     state.import("\\usepackage{graphicx}");
 
-    let mut alt: Option<&String>;
-    let mut src: Option<&String>;
+    let alt: Option<&String>;
+    let src: Option<&String>;
 
     match variant {
         ExtensionVariant::Block => {

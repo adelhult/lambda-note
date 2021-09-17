@@ -54,10 +54,10 @@ fn parse_extension(lines: &mut Lines) -> Option<Block> {
 
     // collect the arguments into a Vec<String>
     let mut arguments = captures.name("args").map_or_else(
-        || Vec::new(),
+        Vec::new,
         |s| {
             s.as_str()
-                .split(",")
+                .split(',')
                 .map(|arg| arg.trim().to_string())
                 .collect()
         }

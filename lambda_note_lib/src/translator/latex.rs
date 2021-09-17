@@ -88,13 +88,13 @@ fn heading(text: String, level: u8) -> String {
 }
 
 fn tag_to_string(tag: &Tag) -> String {
-    match tag {
-        &Tag::Bold => "textbf",
-        &Tag::Italic => "textit",
-        &Tag::Underline => "underline",
-        &Tag::Superscript => "^",
-        &Tag::Subscript => "textsubscript",
-        &Tag::Strikethrough => "sout", // todo: needs package!
+    match *tag {
+        Tag::Bold => "textbf",
+        Tag::Italic => "textit",
+        Tag::Underline => "underline",
+        Tag::Superscript => "^",
+        Tag::Subscript => "textsubscript",
+        Tag::Strikethrough => "sout", // todo: needs package!
     }
     .to_string()
 }
