@@ -1,9 +1,13 @@
 use lambda_note_lib::{DocumentState, Html, Latex, Translator};
-use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 use std::process::{Command, Stdio};
 use std::sync::mpsc::channel;
-use std::{env, fs, path::PathBuf, time::Duration};
-use tempfile::tempdir;
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+    time::Duration,
+};
+use tempfile::Builder;
 
 /// A simple CLI program to test lambda note
 /// Usage: lambda <INPUT FILE> <OUTPUT FILE>
@@ -23,7 +27,6 @@ fn main() {
     }
 }
 
-
 /// Read the file once, transpile it to the correct output format and write to
 /// the given output file.
 fn single_run(args: Vec<String>) {
@@ -38,7 +41,7 @@ fn single_run(args: Vec<String>) {
         Some(extension) => match extension.to_str() {
             Some("tex") => translate(&input_file, &output_file, Latex),
             Some("html") => translate(&input_file, &output_file, Html),
-            
+
             // The program will try to resolve non native output formats
             // by passing a tex file to pandoc.
             Some(extension_str) => {
@@ -63,20 +66,19 @@ fn single_run(args: Vec<String>) {
 }
 
 /// Given a translator and input write to an output file.
-fn translate<T: Translator + 'static>(input_file: &PathBuf, output_file: &PathBuf, translator: T) {
+fn translate<T: Translator + 'static>(input_file: &Path, output_file: &Path, translator: T) {
     let content = fs::read_to_string(input_file).expect("Something went wrong reading the file");
     let mut doc = DocumentState::new(translator);
     let result = doc.translate(&content);
-
-    fs::write(output_file, result).expect("Unable to write file");
 
     println!(
         "errors:\n{}\nwarnings:{}",
         doc.errors.join("\n"),
         doc.warnings.join("\n")
     );
-}
 
+    fs::write(output_file, result).expect("Unable to write file");
+}
 
 /// Invoke pandoc to translate between two formats
 fn pandoc(input_file: &PathBuf, output_file: &PathBuf) {
@@ -99,40 +101,48 @@ fn live_preview(args: Vec<String>) {
 
     println!("Starting a live updating version");
 
-    let dir = tempdir().expect("Failed to create a temp directory");
-    let output_file_path = dir.path().join("index.html");
+    let tempfile = Builder::new()
+        .prefix("preview")
+        .suffix(".html")
+        .rand_bytes(10)
+        .tempfile_in("")
+        .expect("Failed to create a temp file");
 
-    let (tx, rx) = channel();
-    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(1)).unwrap();
+    println!("tempfile path: {}", tempfile.path().to_string_lossy());
+
+    let (tx_watcher, rx_watcher) = channel();
+    let mut watcher: RecommendedWatcher = Watcher::new(tx_watcher, Duration::from_secs(1)).unwrap();
 
     watcher
         .watch(&input_file, RecursiveMode::Recursive)
         .unwrap();
 
-    translate(&input_file, &PathBuf::from(&output_file_path), Html);
+    translate(&input_file, tempfile.path(), Html);
 
-    match Command::new("cmd")
-        .current_dir(dir.path())
+    if let Err(error) = Command::new("cmd")
         .arg("/C")
         .arg("live-server")
-        .arg("index.html")
-        .stdout(Stdio::piped())
+        .arg(tempfile.path())
         .spawn()
     {
-        Err(error) => {
-            println!("Failed to start the live-server, error: {}", error);
-            return;
-        }
-        Ok(_) => (),
+        println!("Failed to start the live-server, error: {}", error);
+        return;
     }
 
+    let (tx_exit, rx_exit) = channel();
+    ctrlc::set_handler(move || tx_exit.send(()).expect("Failed to send ctrl+c signal"))
+        .expect("Error setting Ctrl-C handler");
+
     loop {
-        match rx.recv() {
-            Ok(_) => {
-                println!("\n\n=== The file was rerendered ===");
-                translate(&input_file, &PathBuf::from(&output_file_path), Html);
-            }
-            _ => (),
+        if let Ok(DebouncedEvent::Write(_)) = rx_watcher.try_recv() {
+            println!("\n\n=== The file was rerendered ===");
+            translate(&input_file, tempfile.path(), Html);
+        }
+
+        // check if the user wants to exit the program
+        if let Ok(_) = rx_exit.try_recv() {
+            println!("");
+            break;
         }
     }
 }
