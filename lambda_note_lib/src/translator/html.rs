@@ -60,18 +60,23 @@ impl Translator for Html {
             background: #E2705B;
             color:white;
         }}
+
         h1, h2, h3, h4, h5, h6 {{
             font-family: 'Poppins', sans-serif;
         }}
+
         h1 {{
             font-size: 1.7rem;
         }}
+
         h2 {{
             font-size: 1.5rem;
         }}
+
         body, p {{
             font-family: 'PT Serif', serif;
         }}
+
         .content {{
             box-sizing: border-box;
             padding:0.8rem;
@@ -81,15 +86,35 @@ impl Translator for Html {
             margin-right:auto;
             max-width:750px;
         }}
+
         img {{
             max-width:100%;
         }}
+
         pre {{
             padding:0.8rem;
             font-family: 'Fira Code', monospace;
             box-sizing:border-box;
             font-size:0.9rem;
             border-radius:0.2rem;
+        }}
+
+        hr {{
+            margin-top:2rem;
+            margin-bottom:2rem;
+        }}
+
+        @media print {{
+            hr {{ 
+                page-break-after: always;
+                visibility: hidden;
+                margin:0;
+                padding:0;
+            }}
+
+            .content {{
+                padding:0;
+            }}
         }}
     </style>
     <title>{title}</title>
