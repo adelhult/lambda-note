@@ -92,11 +92,12 @@ impl Translator for Html {
         }}
 
         pre {{
+            border-radius:0.3rem;
             padding:0.8rem;
             font-family: 'Fira Code', monospace;
             box-sizing:border-box;
             font-size:0.9rem;
-            border-radius:0.2rem;
+            overflow-x:auto;
         }}
 
         hr {{
