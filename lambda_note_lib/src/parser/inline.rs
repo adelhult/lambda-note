@@ -114,7 +114,10 @@ impl<'a> ParserState<'a> {
 
 /// Parse inline extensions
 fn extension(state: &mut ParserState) {
-    let mut content = String::new();
+
+    let mut argv = vec![String::new()];
+    let mut current_arg: &mut String = argv.get_mut(0).unwrap();
+
     let mut terminated = false;
     while let Some(c) = state.chars.next() {
         // consume everything up until a second '|'
@@ -123,26 +126,35 @@ fn extension(state: &mut ParserState) {
             break;
         }
 
-        // handle escaping of bar characters inside
-        // of extensions such as '\|'.
-        if c == '\\' && state.chars.peek() == Some(&'|') {
-            content.push('|');
+        // handle escaping of bar characters and commas inside
+        // of extensions such as "\|" and "\,".
+        if c == '\\' && Some(&'|') == state.chars.peek() {
+            current_arg.push('|');
             state.chars.next();
-        } else {
-            content.push(c);
+        } 
+        else if c == '\\' && Some(&',') == state.chars.peek() {
+            current_arg.push(',');
+            state.chars.next();
+        }
+        // If there is an unescaped comma, this means that we should start a new arg
+        else if c == ',' {
+            argv.push(String::new());
+            current_arg = argv.last_mut().unwrap();
+        }
+        // if none of the above is true, just add the char to the current arg string
+        else {
+            current_arg.push(c);
         }
     }
 
     // unterminated extensions are interpreted as
     // just normal text
     if !terminated {
-        state.text_buffer.push_str(&format!("|{}", content));
+        state.text_buffer.push_str(&format!("|{}", current_arg));
         return;
     }
 
     state.push_buffer();
-
-    let argv: Vec<String> = content.split(',').map(|s| s.to_string()).collect();
     state
         .result
         .push(Inline::Extension(argv[0].trim().to_string(), argv[1..].to_vec()));
