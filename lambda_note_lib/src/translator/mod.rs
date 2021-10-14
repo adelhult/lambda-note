@@ -1,5 +1,6 @@
 mod html;
 mod latex;
+mod utils; 
 
 use crate::extensions::{get_native_extensions, Extension, ExtensionVariant};
 use crate::{parse_doc, Block, Inline, Tag};

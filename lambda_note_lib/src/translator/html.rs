@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use super::{Block, DocumentState, Inline, OutputFormat, Tag, Translator};
+use super::utils::indent;
 
 /// A translator that transpiles into HTML code
 pub struct Html;
@@ -44,6 +45,13 @@ impl Translator for Html {
         imports: &HashSet<String>,
         metadata: &HashMap<String, String>,
     ) -> String {
+        
+        let mut import_str = String::new();
+        for import in imports {
+            import_str.push_str(&import);
+            import_str.push('\n');
+        }
+
         format!(
             r#"
 <!DOCTYPE html>
@@ -122,18 +130,18 @@ impl Translator for Html {
 </head>
 <body>
     <div class="content">
-    {top}
-    {content}
-    {bottom}
-    </div>
+{top}
+{content}
+{bottom}
+</div>
 </body>
 </html>"#,
-            imports = imports.iter().fold(String::new(), |acc, s| acc + s + "\n"),
-            top = top,
-            bottom = bottom,
+            imports = indent(&import_str,  2),
+            top = indent(top, 2),
+            bottom = indent(bottom, 2),
             language = metadata.get("language").unwrap_or(&"en".to_string()),
             title = metadata.get("title").unwrap_or(&"Document".to_string()),
-            content = content
+            content = indent(content, 2)
         )
     }
 
