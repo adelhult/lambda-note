@@ -4,18 +4,20 @@ mod math;
 mod maketitle;
 mod code;
 mod conditional;
+mod link;
 
 use crate::translator::{DocumentState, OutputFormat};
 use hidden::Hidden;
 use img::Img;
 use math::Math;
 use code::Code;
+use link::Link;
 use maketitle::Maketitle;
 use conditional::Conditional;
 use std::{collections::HashMap, rc::Rc};
+use serde::{Deserialize, Serialize};
 
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum ExtensionVariant {
     Block,
     Inline,
@@ -48,5 +50,6 @@ pub fn get_native_extensions() -> HashMap<String, Rc<dyn Extension>> {
     map.insert("maketitle".to_string(), Rc::new(Maketitle));
     map.insert("code".to_string(), Rc::new(Code));
     map.insert("conditional".to_string(), Rc::new(Conditional));
+    map.insert("link".to_string(), Rc::new(Link));
     map
 }
