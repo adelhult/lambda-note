@@ -48,7 +48,7 @@ impl Translator for Latex {
 {bottom}
 \end{{document}}
             "#,
-            imports = indent(&imports.iter().fold(String::new(), |acc, s| acc + s + "\n"),2),
+            imports = imports.iter().fold(String::new(), |acc, s| acc + s + "\n"),
             top = indent(top, 1),
             bottom = indent(bottom, 1),
             class = metadata
