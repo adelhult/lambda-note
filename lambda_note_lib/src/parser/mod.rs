@@ -1,4 +1,9 @@
-use std::{collections::HashMap, fmt, iter, str};
+use std::{
+    fmt,
+    iter::{self, Zip},
+    ops::RangeFrom,
+    str,
+};
 
 pub mod block;
 pub mod inline;
@@ -6,14 +11,16 @@ pub mod inline;
 use block::next_block;
 use inline::parse_inline;
 
+type LineNumber = usize;
+
 #[derive(Debug, PartialEq)]
 pub enum Block {
-    Heading(Vec<Inline>, u8),
-    Paragraph(Vec<Inline>),
-    Metadata(String, String),
-    List(Vec<Inline>), // TODO, support ordered lists
-    Divider,           // a section divider, i.e a new page
-    Extension(String, Vec<String>),
+    Heading(Vec<Inline>, u8, LineNumber),
+    Paragraph(Vec<Inline>, LineNumber),
+    Metadata(String, String, LineNumber),
+    List(Vec<Inline>, LineNumber), // TODO, support ordered lists
+    Divider(LineNumber),           // a section divider, i.e a new page
+    Extension(String, Vec<String>, LineNumber),
 }
 
 impl fmt::Display for Block {
@@ -22,21 +29,18 @@ impl fmt::Display for Block {
             f,
             "{}",
             match self {
-                Block::Heading(text, level) => format!(
+                Block::Heading(text, level, _) => format!(
                     "{} (lvl {})",
                     text.iter().map(|i| i.to_string()).collect::<String>(),
                     level
                 ),
-                Block::Paragraph(text) => format!(
+                Block::Paragraph(text, _) => format!(
                     "{}\n",
                     text.iter().map(|i| i.to_string()).collect::<String>()
                 ),
-                Block::Divider => "</divider>".to_string(),
-                Block::Extension(name, args) => format!(
-                    "<{name}, {args:?}>\n</{name}>",
-                    name = name,
-                    args = args
-                ),
+                Block::Divider(_) => "</divider>".to_string(),
+                Block::Extension(name, args, _) =>
+                    format!("<{name}, {args:?}>\n</{name}>", name = name, args = args),
                 _ => "".to_string(), // TODO: implement for the rest
             }
         )
@@ -236,11 +240,11 @@ impl fmt::Display for EscapeChar {
     }
 }
 
-type Lines<'a> = iter::Peekable<str::Lines<'a>>;
+type Lines<'a> = iter::Peekable<Zip<str::Lines<'a>, RangeFrom<LineNumber>>>;
 
 pub fn parse_doc(source: &str) -> Vec<Block> {
-    let mut lines = source.lines().peekable();
-    let mut text: Vec<String> = vec![];
+    let mut lines = source.lines().zip(1..).peekable();
+    let mut text: Vec<(String, LineNumber)> = vec![];
     let mut blocks = vec![];
 
     loop {
@@ -258,8 +262,8 @@ pub fn parse_doc(source: &str) -> Vec<Block> {
         // if there are still lines left,
         // we assume its a normal line of text
         // and push it to the text buffer
-        if let Some(line) = lines.next() {
-            text.push(line.into());
+        if let Some((line, line_number)) = lines.next() {
+            text.push((line.into(), line_number));
             continue;
         }
 
@@ -274,21 +278,43 @@ pub fn parse_doc(source: &str) -> Vec<Block> {
 }
 
 /// Consumes the text buffer and returns a list of paragraph blocks
-fn consume_text_buffer(text: &mut Vec<String>) -> Vec<Block> {
+fn consume_text_buffer(text: &mut Vec<(String, LineNumber)>) -> Vec<Block> {    
     let paragraphs = text
-        .join("\n")
-        .split("\n\n")
-        .map(|p| Block::Paragraph(parse_inline(p)))
-        .filter(|block| {
-            if let Block::Paragraph(p) = block {
-                !p.is_empty()
+        .split(|(s, _)| s.trim().is_empty()) // get each paragraph
+        .filter_map(|lines| {
+            // get the line number of the start of the paragraph
+            let (_, line_number) = lines.get(0)?;
+
+            // remove the line numbers join into a string
+            let text = lines
+                .iter()
+                .map(|(l, _)| l.clone())
+                .collect::<Vec<String>>()
+                .join("\n");
+
+            let block = Block::Paragraph(parse_inline(&text), *line_number);
+            // remove empty paragraph blocks
+            if is_empty(&block) {
+                return None; 
             } else {
-                true
+                Some(block)
             }
-        })
+        }) 
+
         .collect();
 
+    // empty the buffer
     text.clear();
-
+    
     paragraphs
+}
+
+/// returns true if the paragraph contains any elements
+/// otherwise false.
+fn is_empty(block: &Block) -> bool {
+    if let Block::Paragraph(text, _) = block{
+        text.is_empty()
+    } else {
+        false
+    }
 }

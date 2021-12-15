@@ -129,10 +129,10 @@ impl<'a> DocumentState {
     /// Translate a block and return the translated text as an option
     fn translate_block(&mut self, block: Block) -> Option<String> {
         match block {
-            Block::Extension(symbol, args) => {
+            Block::Extension(symbol, args, _) => {
                 self.translate_extension(&symbol, args, ExtensionVariant::Block)
             }
-            Block::Metadata(symbol, value) => {
+            Block::Metadata(symbol, value, _) => {
                 self.add_metadata(symbol, value);
                 None
             }

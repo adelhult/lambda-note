@@ -13,7 +13,7 @@ impl Translator for Html {
 
     fn block(&self, state: &mut DocumentState, block: Block) -> Option<String> {
         match block {
-            Block::Heading(text, lvl) => {
+            Block::Heading(text, lvl, _) => {
                 let level = if lvl > 6 { 6 } else { lvl };
                 Some(format!(
                     "<h{level}>{text}</h{level}>",
@@ -21,8 +21,8 @@ impl Translator for Html {
                     text = state.translate_text(text)
                 ))
             }
-            Block::Divider => Some("<hr/>".to_string()),
-            Block::Paragraph(text) => Some(format!("<p>{}</p>", state.translate_text(text))),
+            Block::Divider(_) => Some("<hr/>".to_string()),
+            Block::Paragraph(text, _) => Some(format!("<p>{}</p>", state.translate_text(text))),
             _ => None,
         }
     }

@@ -12,9 +12,9 @@ impl Translator for Latex {
 
     fn block(&self, state: &mut DocumentState, block: Block) -> Option<String> {
         match block {
-            Block::Heading(text, lvl) => Some(heading(state.translate_text(text), lvl)),
-            Block::Divider => Some("\\newpage".to_string()),
-            Block::Paragraph(text) => Some(format!("{}\n\n", state.translate_text(text))),
+            Block::Heading(text, lvl, _) => Some(heading(state.translate_text(text), lvl)),
+            Block::Divider(_) => Some("\\newpage".to_string()),
+            Block::Paragraph(text, _) => Some(format!("{}\n\n", state.translate_text(text))),
             _ => None,
         }
     }

@@ -2,6 +2,7 @@ use super::{inline::parse_inline, Block, Lines};
 use lazy_static::lazy_static;
 use regex::Regex;
 
+
 /// Returns the next block and consumes the corresponding lines
 /// Note: this function does not parse normal paragraph blocks,
 /// that is done in the `parse_doc` function.
@@ -14,7 +15,7 @@ pub fn next_block(lines: &mut Lines) -> Option<Block> {
 }
 
 fn parse_metadata(lines: &mut Lines) -> Option<Block> {
-    let line = lines.peek()?;
+    let (line, _) = lines.peek()?;
 
     lazy_static! {
         static ref METADATA_RULE: Regex = Regex::new(r"^\s*?::\s*(\w+)\s*=\s*(.+)$").unwrap();
@@ -25,14 +26,17 @@ fn parse_metadata(lines: &mut Lines) -> Option<Block> {
     let value = captures.get(2)?.as_str().trim();
 
     // consume the line
-    lines.next();
-    Some(Block::Metadata(key.into(), value.into()))
+    let (_, line_number) = lines.next()?;
+    Some(Block::Metadata(key.into(), value.into(), line_number))
 }
 
 fn parse_divider(lines: &mut Lines) -> Option<Block> {
-    lines.peek()?.trim_start().starts_with("===").then(|| {
+    let (line, line_number) = lines.peek()?;
+    let line_number = line_number.clone();
+
+    line.trim_start().starts_with("===").then(|| {
         lines.next(); // consume the line
-        Block::Divider
+        Block::Divider(line_number)
     })
 }
 
@@ -47,7 +51,9 @@ fn parse_extension(lines: &mut Lines) -> Option<Block> {
             Regex::new(r"^\s*(?P<div>-{3,})\s*(?P<ident>\w+)\s*(?:,(?P<args>[^-]+))?-*\s*$")
                 .unwrap();
     }
-    let line = lines.peek()?;
+    let (line, line_number) = lines.peek()?;
+    let line_number = line_number.clone();
+
     let captures = RULE.captures(line)?;
     let divider_length = captures.name("div")?.as_str().chars().count();
     let ident = captures.name("ident")?.as_str().trim().to_string();
@@ -70,18 +76,20 @@ fn parse_extension(lines: &mut Lines) -> Option<Block> {
     // that starts with n number of "-" in succession
     let end_prefix = "-".repeat(divider_length);
     let contents = lines
+        .map(|(l, _)| l) // remove the line numbers
         .take_while(|line| !line.trim_start().starts_with(&end_prefix))
         .collect::<Vec<&str>>()
         .join("\n");   
     
-    // the first argument will be the main content of the block
+    // the first argument will be the main content of ,the block
     arguments.insert(0, contents);
 
-    Some(Block::Extension(ident, arguments))
+    Some(Block::Extension(ident, arguments, line_number))
 }
 
 fn parse_heading(lines: &mut Lines) -> Option<Block> {
-    let line = lines.peek()?.trim_start();
+    let (line, _) = lines.peek()?;
+    let line = line.trim_start();
     let level = line.chars().take_while(|c| *c == '#').count();
 
     if level < 1 {
@@ -99,6 +107,6 @@ fn parse_heading(lines: &mut Lines) -> Option<Block> {
     }
 
     // consume the line
-    lines.next();
-    Some(Block::Heading(parse_inline(&title), level as u8))
+    let (_, line_number) = lines.next()?;
+    Some(Block::Heading(parse_inline(&title), level as u8, line_number))
 }

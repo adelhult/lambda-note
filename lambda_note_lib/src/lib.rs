@@ -18,7 +18,7 @@ mod tests {
             Block::Paragraph(vec![
                 Inline::Escaped(EscapeChar::EnDash),
                 Inline::Escaped(EscapeChar::EmDash)
-            ]),
+            ], 1),
             "Testing en dashes and em dashes"
         );
 
@@ -35,7 +35,7 @@ mod tests {
                 Inline::Escaped(EscapeChar::Tilde),
                 Inline::Escaped(EscapeChar::Bar),
                 Inline::Escaped(EscapeChar::Colon)
-            ]),
+            ], 1),
             "Testing tag symbols"
         );
 
