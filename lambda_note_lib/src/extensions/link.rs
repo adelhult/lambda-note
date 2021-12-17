@@ -1,5 +1,6 @@
 use crate::extensions::{Extension, ExtensionVariant};
-use crate::translator::{self, DocumentState, OutputFormat};
+use crate::translator::{DocumentState, OutputFormat};
+use crate::Origin;
 
 /// **Native extension**: add an image
 #[derive(Clone)]
@@ -37,6 +38,7 @@ impl Extension for Link {
         fmt: OutputFormat,
         variant: ExtensionVariant,
         state: &mut DocumentState,
+        origin: &Origin,
     ) -> Option<String> {
         let url: Option<&String>;
         let label: Option<&String>;
@@ -68,7 +70,7 @@ impl Extension for Link {
                     "<a href={url}{style}>{label}</a>",
                     url = url_text,
                     label = match label {
-                        Some(text) => state.translate_no_boilerplate(text),
+                        Some(text) => state.translate_no_boilerplate(text, "Link extension"),
                         None => url_text.to_string(),
                     },
                     style = match color {
@@ -90,7 +92,7 @@ impl Extension for Link {
                 }
 
                 Some(match label {
-                    Some(text) => format!("\\href{{{}}}{{{}}}", url_text, state.translate_no_boilerplate(text)),
+                    Some(text) => format!("\\href{{{}}}{{{}}}", url_text, state.translate_no_boilerplate(text, "Link extension")),
                     None => format!("\\url{{{}}}", url_text),
                 })
             }

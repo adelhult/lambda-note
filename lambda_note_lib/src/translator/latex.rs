@@ -12,14 +12,14 @@ impl Translator for Latex {
 
     fn block(&self, state: &mut DocumentState, block: Block) -> Option<String> {
         match block {
-            Block::Heading(text, lvl, _) => Some(heading(state.translate_text(text), lvl)),
+            Block::Heading(_, lvl, _) => Some(heading(state.translate_content(&block), lvl)),
             Block::Divider(_) => Some("\\newpage".to_string()),
-            Block::Paragraph(text, _) => Some(format!("{}\n\n", state.translate_text(text))),
+            Block::Paragraph(_, _) => Some(format!("{}\n\n", state.translate_content(&block))),
             _ => None,
         }
     }
 
-    fn inline(&self, inline: Inline) -> String {
+    fn inline(&self, inline: &Inline) -> String {
         match inline {
             Inline::Begin(tag) => format!("\\{}{{", tag_to_string(&tag)),
             Inline::End(_) => "}".to_string(),
@@ -101,7 +101,7 @@ fn tag_to_string(tag: &Tag) -> String {
     .to_string()
 }
 
-fn escape_char(c: EscapeChar) -> String {
+fn escape_char(c: &EscapeChar) -> String {
     match c {
         EscapeChar::Alpha => "$\\alpha$",
         EscapeChar::Beta => "$\\beta$",

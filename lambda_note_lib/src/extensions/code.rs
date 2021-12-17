@@ -1,5 +1,6 @@
 use crate::extensions::{Extension, ExtensionVariant};
 use crate::translator::{DocumentState, OutputFormat};
+use crate::Origin;
 use lazy_static::lazy_static;
 use syntect::easy::HighlightLines;
 use syntect::highlighting::ThemeSet;
@@ -31,6 +32,7 @@ impl Extension for Code {
         fmt: OutputFormat,
         variant: ExtensionVariant,
         state: &mut DocumentState,
+        origin: &Origin,
     ) -> Option<String> {
         match fmt {
             OutputFormat::Html => html(args, variant),

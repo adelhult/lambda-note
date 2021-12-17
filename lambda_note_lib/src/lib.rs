@@ -3,7 +3,7 @@ mod parser;
 mod translator;
 mod extensions;
 
-pub use parser::{parse_doc, Block, EscapeChar, Inline, Tag};
+pub use parser::{parse_doc, Block, EscapeChar, Inline, Tag, Origin};
 pub use translator::{DocumentState, OutputFormat, Translator, Html, Latex};
 
 #[cfg(test)]
@@ -12,17 +12,17 @@ mod tests {
 
     #[test]
     fn escape_chars() {
-        let dashes = parse_doc(r#"\endash\emdash"#);
+        let dashes = parse_doc(r#"\endash\emdash"#, "test");
         assert_eq!(
             dashes[0],
             Block::Paragraph(vec![
                 Inline::Escaped(EscapeChar::EnDash),
                 Inline::Escaped(EscapeChar::EmDash)
-            ], 1),
+            ], Origin::new(1, "test")),
             "Testing en dashes and em dashes"
         );
 
-        let tag_symbols = parse_doc(r#"\*\^\_\/\\\=\~\|\:"#);
+        let tag_symbols = parse_doc(r#"\*\^\_\/\\\=\~\|\:"#, "test");
         assert_eq!(
             tag_symbols[0],
             Block::Paragraph(vec![
@@ -35,7 +35,7 @@ mod tests {
                 Inline::Escaped(EscapeChar::Tilde),
                 Inline::Escaped(EscapeChar::Bar),
                 Inline::Escaped(EscapeChar::Colon)
-            ], 1),
+            ], Origin::new(1, "test")),
             "Testing tag symbols"
         );
 
@@ -44,7 +44,7 @@ mod tests {
             \alpha\beta\gamma\Gamma\delta\Delta\epsilon\varepsilon\zeta\eta\theta\Theta\vartheta
             \iota\kappa\lambda\Lambda\mu\nu\xi\Xi\pi\Pi\rho\varrho\sigma\Sigma\tau\upsilon\Upsilon
             \phi\Phi\varphi\chi\psi\Psi\omega\Omega
-        "#,
+        "#, "test"
         );
 
         assert_eq!(

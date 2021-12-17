@@ -69,7 +69,7 @@ fn single_run(args: Vec<String>) {
 fn translate<T: Translator + 'static>(input_file: &Path, output_file: &Path, translator: T) {
     let content = fs::read_to_string(input_file).expect("Something went wrong reading the file");
     let mut doc = DocumentState::new(translator);
-    let result = doc.translate(&content);
+    let result = doc.translate(&content, "preview");
 
     println!(
         "errors:\n{}\nwarnings:{}",

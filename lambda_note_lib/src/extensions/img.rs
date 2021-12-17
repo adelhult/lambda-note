@@ -1,5 +1,6 @@
 use crate::extensions::{Extension, ExtensionVariant};
 use crate::translator::{DocumentState, OutputFormat};
+use crate::Origin;
 
 /// **Native extension**: add an image
 #[derive(Clone)]
@@ -34,6 +35,7 @@ impl Extension for Img {
         fmt: OutputFormat,
         variant: ExtensionVariant,
         state: &mut DocumentState,
+        origin: &Origin,
     ) -> Option<String> {
         match fmt {
             OutputFormat::LambdaNote => todo!(),

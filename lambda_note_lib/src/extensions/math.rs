@@ -1,6 +1,8 @@
 use crate::extensions::{Extension, ExtensionVariant};
 use crate::translator::{DocumentState, OutputFormat};
+use crate::Origin;
 use latex2mathml::{latex_to_mathml, DisplayStyle};
+
 /// **Native extension**: make math equations
 /// TODO: handle errors
 #[derive(Clone)]
@@ -25,6 +27,7 @@ impl Extension for Math {
         output_format: OutputFormat,
         variant: ExtensionVariant,
         state: &mut DocumentState,
+        origin: &Origin,
     ) -> Option<String> {
         match output_format {
             OutputFormat::Latex => latex(args, variant, state),

@@ -7,6 +7,7 @@ mod conditional;
 mod link;
 
 use crate::translator::{DocumentState, OutputFormat};
+use crate::parser::Origin;
 use hidden::Hidden;
 use img::Img;
 use math::Math;
@@ -34,8 +35,10 @@ pub trait Extension {
         args: Vec<String>,
         output_format: OutputFormat,
         variant: ExtensionVariant,
-        state: &mut DocumentState
+        document: &mut DocumentState,
+        origin: &Origin,
     ) -> Option<String>;
+
     fn supports_block(&self) -> bool;
     fn supports_inline(&self) -> bool;
     fn interests(&self) -> Vec<String>;

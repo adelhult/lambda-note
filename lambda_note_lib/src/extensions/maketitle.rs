@@ -1,6 +1,6 @@
 use crate::extensions::{Extension, ExtensionVariant};
 use crate::translator::{DocumentState, OutputFormat};
-
+use crate::Origin;
 /// **Native extension**: generate titlepages just like in latex
 #[derive(Clone)]
 pub struct Maketitle;
@@ -30,6 +30,7 @@ impl Extension for Maketitle {
         fmt: OutputFormat,
         variant: ExtensionVariant,
         state: &mut DocumentState,
+        origin: &Origin,
     ) -> Option<String> {
         if !args.is_empty() {
             state.add_warning("maketitle does not take any arguments");

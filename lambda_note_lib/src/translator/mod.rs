@@ -1,9 +1,9 @@
 mod html;
 mod latex;
-mod utils; 
+mod utils;
 
 use crate::extensions::{get_native_extensions, Extension, ExtensionVariant};
-use crate::{parse_doc, Block, Inline, Tag};
+use crate::{parse_doc, Block, Inline, Origin, Tag};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -25,7 +25,7 @@ pub trait Translator {
     fn block(&self, state: &mut DocumentState, block: Block) -> Option<String>;
 
     /// Translate an inline element
-    fn inline(&self, inline: Inline) -> String;
+    fn inline(&self, inline: &Inline) -> String;
 
     /// generate a boilerplate document given the content and the rest of the document state
     fn boilerplate(
@@ -84,8 +84,8 @@ impl<'a> DocumentState {
     /// Given the current document state translate the source text
     /// and mutate the state if a new extensions or metadata fields
     /// are found
-    pub fn translate(&mut self, source: &str) -> String {
-        let result = self.translate_no_boilerplate(source);
+    pub fn translate(&mut self, source: &str, doc_name: &str) -> String {
+        let result = self.translate_no_boilerplate(source, doc_name);
         // TODO: the translator should not be cloned,
         // there is def. a better way to do this.
         self.translator.boilerplate(
@@ -97,10 +97,10 @@ impl<'a> DocumentState {
         )
     }
 
-    pub fn translate_no_boilerplate(&mut self, source: &str) -> String {
+    pub fn translate_no_boilerplate(&mut self, source: &str, doc_name: &str) -> String {
         let mut output = String::new();
 
-        for block in parse_doc(source) {
+        for block in parse_doc(source, doc_name) {
             if let Some(s) = self.translate_block(block) {
                 output.push_str(&format!("{}\n", s))
             }
@@ -115,9 +115,10 @@ impl<'a> DocumentState {
         symbol: &str,
         args: Vec<String>,
         variant: ExtensionVariant,
+        origin: &Origin,
     ) -> Option<String> {
         let extension = self.extensions.get(symbol)?.clone();
-        extension.call(args, self.translator.output_format(), variant, self)
+        extension.call(args, self.translator.output_format(), variant, self, origin)
         // TODO: handle errors, and is rc really the right choice?
     }
 
@@ -129,8 +130,8 @@ impl<'a> DocumentState {
     /// Translate a block and return the translated text as an option
     fn translate_block(&mut self, block: Block) -> Option<String> {
         match block {
-            Block::Extension(symbol, args, _) => {
-                self.translate_extension(&symbol, args, ExtensionVariant::Block)
+            Block::Extension(symbol, args, origin) => {
+                self.translate_extension(&symbol, args, ExtensionVariant::Block, &origin)
             }
             Block::Metadata(symbol, value, _) => {
                 self.add_metadata(symbol, value);
@@ -142,14 +143,24 @@ impl<'a> DocumentState {
         }
     }
 
-    fn translate_text(&mut self, text: Vec<Inline>) -> String {
-        text.into_iter().map(|i| self.translate_inline(i)).collect()
+    fn translate_content(&mut self, block: &Block) -> String {
+        let (text, origin) = match block {
+            Block::Heading(text, _, origin) => (text, origin),
+            Block::Paragraph(text, origin) => (text, origin),
+            _ => panic!("Can not translate blocks without inline elements"),
+        };
+        text.into_iter().map(|i| self.translate_inline(i, origin)).collect()
     }
 
-    fn translate_inline(&mut self, inline: Inline) -> String {
+    fn translate_inline(&mut self, inline: &Inline, origin: &Origin) -> String {
         if let Inline::Extension(symbol, args) = inline {
             return self
-                .translate_extension(&symbol, args, ExtensionVariant::Inline)
+                .translate_extension(
+                    &symbol,
+                    args.clone(),
+                    ExtensionVariant::Inline,
+                    origin
+                )
                 .unwrap_or("".to_string());
         }
 

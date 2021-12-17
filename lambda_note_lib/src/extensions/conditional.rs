@@ -1,4 +1,5 @@
 use crate::extensions::{Extension, ExtensionVariant};
+use crate::Origin;
 use crate::translator::{DocumentState, OutputFormat};
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -52,6 +53,7 @@ impl Extension for Conditional {
         fmt: OutputFormat,
         _: ExtensionVariant,
         state: &mut DocumentState,
+        origin: &Origin,
     ) -> Option<String> {
         if args.is_empty() {
             return None;
@@ -81,11 +83,11 @@ impl Extension for Conditional {
                     return None;
                 }
             }
-            Some(state.translate_no_boilerplate(&body.to_string()))
+            Some(state.translate_no_boilerplate(&body.to_string(), "Conditinal extension"))
         } else {
             for expr in exprs {
                 if expr.check(fmt, platform, state) {
-                    return Some(state.translate_no_boilerplate(&body.to_string()));
+                    return Some(state.translate_no_boilerplate(&body.to_string(), "Conditinal extension"));
                 }
             }
             None

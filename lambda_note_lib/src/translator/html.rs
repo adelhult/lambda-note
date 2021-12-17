@@ -13,21 +13,21 @@ impl Translator for Html {
 
     fn block(&self, state: &mut DocumentState, block: Block) -> Option<String> {
         match block {
-            Block::Heading(text, lvl, _) => {
-                let level = if lvl > 6 { 6 } else { lvl };
+            Block::Heading(_, lvl, _) => {
                 Some(format!(
                     "<h{level}>{text}</h{level}>",
-                    level = level,
-                    text = state.translate_text(text)
+                    text = state.translate_content(&block),
+                    level = if lvl > 6 { 6 } else { lvl },
+                    
                 ))
             }
             Block::Divider(_) => Some("<hr/>".to_string()),
-            Block::Paragraph(text, _) => Some(format!("<p>{}</p>", state.translate_text(text))),
+            Block::Paragraph(_, _) => Some(format!("<p>{}</p>", state.translate_content(&block))),
             _ => None,
         }
     }
 
-    fn inline(&self, inline: Inline) -> String {
+    fn inline(&self, inline: &Inline) -> String {
         match inline {
             Inline::Begin(tag) => format!("<{}>", tag_to_string(&tag)),
             Inline::End(tag) => format!("</{}>", tag_to_string(&tag)),

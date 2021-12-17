@@ -13,14 +13,32 @@ use inline::parse_inline;
 
 type LineNumber = usize;
 
+/// Describes the origin of a block
+/// i.e the line number and the document name or the name of 
+/// the extension macro that created it
+#[derive(Debug, PartialEq)]
+pub struct Origin {
+    line_number: usize,
+    document_name: String,
+}
+
+impl Origin {
+    pub fn new(line_number: usize, document_name: &str) -> Self {
+        Origin {
+            line_number,
+            document_name: document_name.to_string()
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Block {
-    Heading(Vec<Inline>, u8, LineNumber),
-    Paragraph(Vec<Inline>, LineNumber),
-    Metadata(String, String, LineNumber),
-    List(Vec<Inline>, LineNumber), // TODO, support ordered lists
-    Divider(LineNumber),           // a section divider, i.e a new page
-    Extension(String, Vec<String>, LineNumber),
+    Heading(Vec<Inline>, u8, Origin),
+    Paragraph(Vec<Inline>, Origin),
+    Metadata(String, String, Origin),
+    List(Vec<Inline>, Origin), // TODO, support ordered lists
+    Divider(Origin),           // a section divider, i.e a new page
+    Extension(String, Vec<String>, Origin),
 }
 
 impl fmt::Display for Block {
@@ -242,16 +260,17 @@ impl fmt::Display for EscapeChar {
 
 type Lines<'a> = iter::Peekable<Zip<str::Lines<'a>, RangeFrom<LineNumber>>>;
 
-pub fn parse_doc(source: &str) -> Vec<Block> {
+
+pub fn parse_doc(source: &str, doc_name: &str) -> Vec<Block> {
     let mut lines = source.lines().zip(1..).peekable();
     let mut text: Vec<(String, LineNumber)> = vec![];
     let mut blocks = vec![];
 
     loop {
-        if let Some(block) = next_block(&mut lines) {
+        if let Some(block) = next_block(&mut lines, doc_name) {
             // start of a new block -> empty the buffer
             if !text.is_empty() {
-                blocks.append(&mut consume_text_buffer(&mut text));
+                blocks.append(&mut consume_text_buffer(&mut text, doc_name));
             }
 
             // append the new block as well
@@ -270,7 +289,7 @@ pub fn parse_doc(source: &str) -> Vec<Block> {
         // finally, if the document is fully exhausted,
         // append the last paragraph and break the loop
         if !text.is_empty() {
-            blocks.append(&mut consume_text_buffer(&mut text));
+            blocks.append(&mut consume_text_buffer(&mut text, doc_name));
         }
 
         break blocks;
@@ -278,7 +297,7 @@ pub fn parse_doc(source: &str) -> Vec<Block> {
 }
 
 /// Consumes the text buffer and returns a list of paragraph blocks
-fn consume_text_buffer(text: &mut Vec<(String, LineNumber)>) -> Vec<Block> {    
+fn consume_text_buffer(text: &mut Vec<(String, LineNumber)>, doc_name: &str) -> Vec<Block> {    
     let paragraphs = text
         .split(|(s, _)| s.trim().is_empty()) // get each paragraph
         .filter_map(|lines| {
@@ -292,7 +311,7 @@ fn consume_text_buffer(text: &mut Vec<(String, LineNumber)>) -> Vec<Block> {
                 .collect::<Vec<String>>()
                 .join("\n");
 
-            let block = Block::Paragraph(parse_inline(&text), *line_number);
+            let block = Block::Paragraph(parse_inline(&text), Origin::new(*line_number, doc_name));
             // remove empty paragraph blocks
             if is_empty(&block) {
                 return None; 
