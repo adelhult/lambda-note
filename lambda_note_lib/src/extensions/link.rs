@@ -1,6 +1,5 @@
-use crate::extensions::{Extension, ExtensionVariant};
-use crate::translator::{DocumentState, OutputFormat};
-use crate::Origin;
+use crate::extensions::{Extension, ExtensionVariant, Context};
+use crate::translator::OutputFormat;
 
 /// **Native extension**: add an image
 #[derive(Clone)]
@@ -34,35 +33,31 @@ impl Extension for Link {
 
     fn call(
         &self,
-        args: Vec<String>,
-        fmt: OutputFormat,
-        variant: ExtensionVariant,
-        state: &mut DocumentState,
-        origin: &Origin,
+        mut ctx: Context,
     ) -> Option<String> {
         let url: Option<&String>;
         let label: Option<&String>;
 
-        match variant {
+        match ctx.variant {
             ExtensionVariant::Block => {
-                url = args.get(1);
-                label = args.get(0);
+                url = ctx.arguments.get(1);
+                label = ctx.arguments.get(0);
             }
             ExtensionVariant::Inline => {
-                url = args.get(0);
-                label = args.get(1);
+                url = ctx.arguments.get(0);
+                label = ctx.arguments.get(1);
             }
         }
 
         if url.is_none() {
-            state.add_error("Link extensions need to be provided an url");
+            self.add_error("Link extensions need to be provided an url", &mut ctx);
             return None;
         }
         let url_text = url.unwrap();
 
-        let color = state.metadata.get("link_color").cloned();
+        let color = ctx.document.metadata.get("link_color").cloned();
 
-        match fmt {
+        match ctx.output_format {
             OutputFormat::LambdaNote => todo!(),
             // html output
             OutputFormat::Html => {
@@ -70,7 +65,7 @@ impl Extension for Link {
                     "<a href={url}{style}>{label}</a>",
                     url = url_text,
                     label = match label {
-                        Some(text) => state.translate_no_boilerplate(text, "Link extension"),
+                        Some(text) => ctx.document.translate_no_boilerplate(text, "Link extension"),
                         None => url_text.to_string(),
                     },
                     style = match color {
@@ -81,18 +76,18 @@ impl Extension for Link {
             }
             // latex output
             OutputFormat::Latex => {
-                state.import("\\usepackage{hyperref}");
+                ctx.document.import("\\usepackage{hyperref}");
                 
                 // add color options if given any
                 if let Some(color) = color {
-                    state.import(&format!(
+                    ctx.document.import(&format!(
                         "\\hypersetup{{colorlinks=true, linkcolor={color},urlcolor={color}}}",
                         color = color
                     ));
                 }
 
                 Some(match label {
-                    Some(text) => format!("\\href{{{}}}{{{}}}", url_text, state.translate_no_boilerplate(text, "Link extension")),
+                    Some(text) => format!("\\href{{{}}}{{{}}}", url_text, ctx.document.translate_no_boilerplate(text, "Link extension")),
                     None => format!("\\url{{{}}}", url_text),
                 })
             }

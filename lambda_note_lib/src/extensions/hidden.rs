@@ -1,13 +1,10 @@
-use crate::extensions::{Extension, ExtensionVariant};
-use crate::translator::{DocumentState, OutputFormat};
-use crate::Origin;
+use crate::extensions::{Extension, Context};
 
 /// **Native extension**: hides the content from the final output
 #[derive(Clone)]
 pub struct Hidden;
 
 impl Extension for Hidden {
-
     fn name(&self) -> String {
         "Hidden".to_string()
     }
@@ -20,14 +17,7 @@ impl Extension for Hidden {
         "1".to_string()
     }
 
-    fn call(
-        &self,
-        _: Vec<String>,
-        _: OutputFormat,
-        _: ExtensionVariant,
-        _: &mut DocumentState,
-        _: &Origin,
-    ) -> Option<String> {
+    fn call(&self, _: Context) -> Option<String> {
         None
     }
 

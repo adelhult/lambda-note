@@ -44,7 +44,7 @@ fn parse_divider(lines: &mut Lines, doc_name: &str) -> Option<Block> {
 }
 
 // TODO
-fn parse_list(_lines: &mut Lines, doc_name: &str) -> Option<Block> {
+fn parse_list(_lines: &mut Lines, _: &str) -> Option<Block> {
     None
 }
 

@@ -1,6 +1,5 @@
-use crate::extensions::{Extension, ExtensionVariant};
+use crate::extensions::{Extension, ExtensionVariant, Context};
 use crate::translator::{DocumentState, OutputFormat};
-use crate::Origin;
 /// **Native extension**: generate titlepages just like in latex
 #[derive(Clone)]
 pub struct Maketitle;
@@ -26,23 +25,19 @@ impl Extension for Maketitle {
 
     fn call(
         &self,
-        args: Vec<String>,
-        fmt: OutputFormat,
-        variant: ExtensionVariant,
-        state: &mut DocumentState,
-        origin: &Origin,
+        mut ctx: Context,
     ) -> Option<String> {
-        if !args.is_empty() {
-            state.add_warning("maketitle does not take any arguments");
+        if ctx.no_arguments() {
+            self.add_warning("maketitle does not take any arguments", &mut ctx);
         }
 
-        if let ExtensionVariant::Block = variant {
-            state.add_error("maketitle can not be a block extension");
+        if let ExtensionVariant::Block = ctx.variant {
+            self.add_error("maketitle can not be a block extension", &mut ctx);
             return None;
         }
-        match fmt {
-            OutputFormat::Latex => latex(state),
-            OutputFormat::Html => html(state),
+        match ctx.output_format {
+            OutputFormat::Latex => latex(&mut ctx),
+            OutputFormat::Html => html(&mut ctx),
             _ => panic!("Not implemented yet"),
         }
     }
@@ -64,23 +59,23 @@ impl Extension for Maketitle {
     }
 }
 
-fn latex(state: &mut DocumentState) -> Option<String> {
+fn latex(ctx: &mut Context) -> Option<String> {
     let mut defines = String::new();
 
     for field in ["title", "author", "date"].iter() {
-        if let Some(value) = state.metadata.get(*field) {
+        if let Some(value) = ctx.document.metadata.get(*field) {
             // example: \field{value}
             defines.push_str(&format!("\\{}{{{}}}\n", field, value));
         }
     }
-    state.import(&defines);
+    ctx.document.import(&defines);
     Some("\\maketitle".to_string())
 }
 
-fn html(state: &mut DocumentState) -> Option<String> {
+fn html(ctx: &mut Context) -> Option<String> {
     // add stylinging for the tile.
     // TODO: Should perhaps have a seperate hook for that
-    state.import(
+    ctx.document.import(
         "<style>\
     .maketitle__title {\
         position:relative;\
@@ -97,7 +92,7 @@ fn html(state: &mut DocumentState) -> Option<String> {
     </style>",
     );
 
-    let (title, author, date) = get_metadata(state)?;
+    let (title, author, date) = get_metadata(ctx.document)?;
 
     Some(format!(
         "<header class=\"maketitle__title\">\

@@ -1,22 +1,22 @@
-mod hidden;
-mod img;
-mod math;
-mod maketitle;
 mod code;
 mod conditional;
+mod hidden;
+mod img;
 mod link;
+mod maketitle;
+mod math;
 
-use crate::translator::{DocumentState, OutputFormat};
 use crate::parser::Origin;
+use crate::translator::{DocumentState, OutputFormat};
+use code::Code;
+use conditional::Conditional;
 use hidden::Hidden;
 use img::Img;
-use math::Math;
-use code::Code;
 use link::Link;
 use maketitle::Maketitle;
-use conditional::Conditional;
-use std::{collections::HashMap, rc::Rc};
+use math::Math;
 use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, rc::Rc};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum ExtensionVariant {
@@ -24,24 +24,67 @@ pub enum ExtensionVariant {
     Inline,
 }
 
+pub struct Context<'a> {
+    document: &'a mut DocumentState,
+    origin: Origin,
+    variant: ExtensionVariant,
+    output_format: OutputFormat,
+    arguments: Vec<String>,
+}
+
+impl<'a> Context<'a> {
+    pub fn new(
+        args: Vec<String>,
+        variant: ExtensionVariant,
+        document: &'a mut DocumentState,
+        origin: Origin,
+    ) -> Self {
+        Context {
+            arguments: args,
+            output_format: document.get_output_format(),
+            document,
+            origin: origin,
+            variant,
+        }
+    }
+
+    pub fn no_arguments(&self) -> bool {
+        self.arguments.is_empty()
+    }
+}
 
 pub trait Extension {
     fn name(&self) -> String;
     fn description(&self) -> String;
     fn version(&self) -> String;
 
-    fn call(
-        &self,
-        args: Vec<String>,
-        output_format: OutputFormat,
-        variant: ExtensionVariant,
-        document: &mut DocumentState,
-        origin: &Origin,
-    ) -> Option<String>;
+    fn call(&self, context: Context) -> Option<String>;
 
     fn supports_block(&self) -> bool;
     fn supports_inline(&self) -> bool;
     fn interests(&self) -> Vec<String>;
+
+    fn add_error(&self, description: &str, ctx: &mut Context) {
+        ctx.document.errors.push(format!(
+            "Error from {name} expression: {description}.\n\
+                (Line {line_number} of {document_name}",
+            name = self.name(),
+            description = description,
+            line_number = ctx.origin.line_number,
+            document_name = ctx.origin.document_name
+        ));
+    }
+
+    fn add_warning(&self, description: &str, ctx: &mut Context) {
+        ctx.document.warnings.push(format!(
+            "Warning from {name} expression: {description}.\n\
+                (Line {line_number} of {document_name}",
+            name = self.name(),
+            description = description,
+            line_number = ctx.origin.line_number,
+            document_name = ctx.origin.document_name
+        ));
+    }
 }
 
 /// Returns a hashmap of all the native extensions

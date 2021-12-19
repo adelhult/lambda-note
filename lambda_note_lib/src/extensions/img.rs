@@ -1,6 +1,5 @@
-use crate::extensions::{Extension, ExtensionVariant};
-use crate::translator::{DocumentState, OutputFormat};
-use crate::Origin;
+use crate::extensions::{Context, Extension, ExtensionVariant};
+use crate::translator::OutputFormat;
 
 /// **Native extension**: add an image
 #[derive(Clone)]
@@ -29,18 +28,11 @@ impl Extension for Img {
         "1".to_string()
     }
 
-    fn call(
-        &self,
-        args: Vec<String>,
-        fmt: OutputFormat,
-        variant: ExtensionVariant,
-        state: &mut DocumentState,
-        origin: &Origin,
-    ) -> Option<String> {
-        match fmt {
+    fn call(&self, mut ctx: Context) -> Option<String> {
+        match ctx.output_format {
             OutputFormat::LambdaNote => todo!(),
-            OutputFormat::Html => html(args, variant, state),
-            OutputFormat::Latex => latex(args, variant, state),
+            OutputFormat::Html => self.html(&mut ctx),
+            OutputFormat::Latex => self.latex(&mut ctx),
         }
     }
 
@@ -56,77 +48,70 @@ impl Extension for Img {
         vec![]
     }
 }
+impl Img {
+    fn html(&self, ctx: &mut Context) -> Option<String> {
+        let alt: Option<&String>;
+        let src: Option<&String>;
 
-fn html(
-    args: Vec<String>,
-    variant: ExtensionVariant,
-    state: &mut DocumentState,
-) -> Option<String> {
-    let alt: Option<&String>;
-    let src: Option<&String>;
+        match ctx.variant {
+            ExtensionVariant::Block => {
+                alt = ctx.arguments.get(0);
+                src = ctx.arguments.get(1);
+            }
 
-    match variant {
-        ExtensionVariant::Block => {
-            alt = args.get(0);
-            src = args.get(1);
+            ExtensionVariant::Inline => {
+                src = ctx.arguments.get(0);
+                alt = ctx.arguments.get(1);
+            }
+        }
+        if src.is_none() {
+            self.add_error("Img: no path to the image was given", ctx);
+            return None;
         }
 
-        ExtensionVariant::Inline => {
-            src = args.get(0);
-            alt = args.get(1);
-        }
-    }
-    if src.is_none() {
-        state.add_error("Img: no path to the image was given");
-        return None;
-    }
-
-    Some(format!(
-        "<img src=\"{filename}\" {alt}>",
-        filename = src.map_or_else(|| String::from(""), |s| s.to_owned()),
-        alt = alt.map_or_else(|| String::from(""), |s| format!("alt=\"{}\"", s))
-    ))
-}
-
-// | src, [alt, width, label] |
-fn latex(
-    args: Vec<String>,
-    variant: ExtensionVariant,
-    state: &mut DocumentState,
-) -> Option<String> {
-    state.import("\\usepackage{graphicx}");
-
-    let alt: Option<&String>;
-    let src: Option<&String>;
-
-    match variant {
-        ExtensionVariant::Block => {
-            alt = args.get(0);
-            src = args.get(1);
-        }
-
-        ExtensionVariant::Inline => {
-            src = args.get(0);
-            alt = args.get(1);
-        }
+        Some(format!(
+            "<img src=\"{filename}\" {alt}>",
+            filename = src.map_or_else(|| String::from(""), |s| s.to_owned()),
+            alt = alt.map_or_else(|| String::from(""), |s| format!("alt=\"{}\"", s))
+        ))
     }
 
-    Some(format!(
-        "\\begin{{figure}}[h]
+    // | src, [alt, width, label] |
+    fn latex(&self, ctx: &mut Context) -> Option<String> {
+        ctx.document.import("\\usepackage{graphicx}");
+
+        let alt: Option<&String>;
+        let src: Option<&String>;
+
+        match ctx.variant {
+            ExtensionVariant::Block => {
+                alt = ctx.arguments.get(0);
+                src = ctx.arguments.get(1);
+            }
+
+            ExtensionVariant::Inline => {
+                src = ctx.arguments.get(0);
+                alt = ctx.arguments.get(1);
+            }
+        }
+
+        Some(format!(
+            "\\begin{{figure}}[h]
 {caption}
 {label}
 \\centering
 \\includegraphics[width={width}\\textwidth]{{{src}}}
 \\end{{figure}}",
-        src = src.unwrap_or(&String::from("")),
-        caption = alt.map_or_else(
-            || String::from(""),
-            |text| format!("\\caption{{{}}}", text.trim().replace("\n", r#"\\"#))
-        ),
-        width = args.get(2).unwrap_or(&String::from("1")),
-        label = args.get(3).map_or_else(
-            || String::from(""),
-            |label| format!("\\label{{{}}}", label.trim())
-        )
-    ))
+            src = src.unwrap_or(&String::from("")),
+            caption = alt.map_or_else(
+                || String::from(""),
+                |text| format!("\\caption{{{}}}", text.trim().replace("\n", r#"\\"#))
+            ),
+            width = ctx.arguments.get(2).unwrap_or(&String::from("1")),
+            label = ctx.arguments.get(3).map_or_else(
+                || String::from(""),
+                |label| format!("\\label{{{}}}", label.trim())
+            )
+        ))
+    }
 }

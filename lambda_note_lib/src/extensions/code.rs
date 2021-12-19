@@ -1,6 +1,5 @@
-use crate::extensions::{Extension, ExtensionVariant};
-use crate::translator::{DocumentState, OutputFormat};
-use crate::Origin;
+use crate::extensions::{Context, Extension, ExtensionVariant};
+use crate::translator::OutputFormat;
 use lazy_static::lazy_static;
 use syntect::easy::HighlightLines;
 use syntect::highlighting::ThemeSet;
@@ -26,17 +25,10 @@ impl Extension for Code {
         "1".to_string()
     }
 
-    fn call(
-        &self,
-        args: Vec<String>,
-        fmt: OutputFormat,
-        variant: ExtensionVariant,
-        state: &mut DocumentState,
-        origin: &Origin,
-    ) -> Option<String> {
-        match fmt {
-            OutputFormat::Html => html(args, variant),
-            OutputFormat::Latex => latex(args, variant, state),
+    fn call(&self, mut ctx: Context) -> Option<String> {
+        match ctx.output_format {
+            OutputFormat::Html => html(&mut ctx),
+            OutputFormat::Latex => latex(&mut ctx),
             _ => None,
         }
     }
@@ -54,7 +46,7 @@ impl Extension for Code {
     }
 }
 
-fn html(args: Vec<String>, variant: ExtensionVariant) -> Option<String> {
+fn html(ctx: &Context) -> Option<String> {
     lazy_static! {
         static ref PS: SyntaxSet = SyntaxSet::load_defaults_newlines();
         static ref TS: ThemeSet = ThemeSet::load_defaults();
@@ -64,7 +56,7 @@ fn html(args: Vec<String>, variant: ExtensionVariant) -> Option<String> {
 
     // get the syntax based on the given input
     // otherwise fallback to using plain text
-    let syntax = if let Some(language) = args.get(1) {
+    let syntax = if let Some(language) = ctx.arguments.get(1) {
         match PS.find_syntax_by_token(language.trim()) {
             Some(syntax) => syntax,
             None => PS.find_syntax_plain_text(),
@@ -73,12 +65,12 @@ fn html(args: Vec<String>, variant: ExtensionVariant) -> Option<String> {
         PS.find_syntax_plain_text()
     };
 
-    let code = match args.get(0) {
+    let code = match ctx.arguments.get(0) {
         Some(value) => value.to_string(),
         None => "".into(),
     };
 
-    match variant {
+    match ctx.variant {
         ExtensionVariant::Block => Some(highlighted_html_for_string(&code, &PS, syntax, theme)),
         ExtensionVariant::Inline => {
             let mut h = HighlightLines::new(syntax, theme);
@@ -91,27 +83,23 @@ fn html(args: Vec<String>, variant: ExtensionVariant) -> Option<String> {
     }
 }
 
-fn latex(
-    args: Vec<String>,
-    variant: ExtensionVariant,
-    state: &mut DocumentState,
-) -> Option<String> {
-    let code = match args.get(0) {
+fn latex(ctx: &mut Context) -> Option<String> {
+    let code = match ctx.arguments.get(0) {
         Some(value) => value.to_string(),
         None => "".into(),
     };
 
     let language = format!(
         "{{{}}}",
-        match args.get(1) {
+        match ctx.arguments.get(1) {
             Some(language) => language,
             None => "text",
         }
     );
 
-    state.import("\\usepackage{minted}");
+    ctx.document.import("\\usepackage{minted}");
 
-    Some(match variant {
+    Some(match ctx.variant {
         ExtensionVariant::Block => format!(
             "\\begin{{minted}}{lang}\n{content}\n\\end{{minted}}",
             lang = language,

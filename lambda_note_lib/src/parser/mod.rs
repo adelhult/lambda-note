@@ -16,10 +16,10 @@ type LineNumber = usize;
 /// Describes the origin of a block
 /// i.e the line number and the document name or the name of 
 /// the extension macro that created it
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Origin {
-    line_number: usize,
-    document_name: String,
+    pub line_number: usize,
+    pub document_name: String,
 }
 
 impl Origin {

@@ -2,7 +2,7 @@ mod html;
 mod latex;
 mod utils;
 
-use crate::extensions::{get_native_extensions, Extension, ExtensionVariant};
+use crate::extensions::{get_native_extensions, Context, Extension, ExtensionVariant};
 use crate::{parse_doc, Block, Inline, Origin, Tag};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -69,14 +69,6 @@ impl<'a> DocumentState {
         }
     }
 
-    pub fn add_warning(&mut self, warning: &str) {
-        self.warnings.push(warning.to_string());
-    }
-
-    pub fn add_error(&mut self, error: &str) {
-        self.errors.push(error.to_string());
-    }
-
     pub fn import(&mut self, import: &str) {
         self.imports.insert(import.to_string());
     }
@@ -118,7 +110,7 @@ impl<'a> DocumentState {
         origin: &Origin,
     ) -> Option<String> {
         let extension = self.extensions.get(symbol)?.clone();
-        extension.call(args, self.translator.output_format(), variant, self, origin)
+        extension.call(Context::new(args, variant, self, origin.clone()))
         // TODO: handle errors, and is rc really the right choice?
     }
 
@@ -149,21 +141,22 @@ impl<'a> DocumentState {
             Block::Paragraph(text, origin) => (text, origin),
             _ => panic!("Can not translate blocks without inline elements"),
         };
-        text.into_iter().map(|i| self.translate_inline(i, origin)).collect()
+        text.into_iter()
+            .map(|i| self.translate_inline(i, origin))
+            .collect()
     }
 
     fn translate_inline(&mut self, inline: &Inline, origin: &Origin) -> String {
         if let Inline::Extension(symbol, args) = inline {
             return self
-                .translate_extension(
-                    &symbol,
-                    args.clone(),
-                    ExtensionVariant::Inline,
-                    origin
-                )
+                .translate_extension(&symbol, args.clone(), ExtensionVariant::Inline, origin)
                 .unwrap_or("".to_string());
         }
 
         self.translator.inline(inline)
+    }
+
+    pub fn get_output_format(&self) -> OutputFormat {
+        self.translator.output_format()
     }
 }

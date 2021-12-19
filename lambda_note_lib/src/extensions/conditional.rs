@@ -1,6 +1,5 @@
-use crate::extensions::{Extension, ExtensionVariant};
-use crate::Origin;
-use crate::translator::{DocumentState, OutputFormat};
+use crate::extensions::{Context, Extension};
+use crate::translator::OutputFormat;
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -47,27 +46,20 @@ impl Extension for Conditional {
         "1".to_string()
     }
 
-    fn call(
-        &self,
-        args: Vec<String>,
-        fmt: OutputFormat,
-        _: ExtensionVariant,
-        state: &mut DocumentState,
-        origin: &Origin,
-    ) -> Option<String> {
-        if args.is_empty() {
+    fn call(&self, mut ctx: Context) -> Option<String> {
+        if ctx.no_arguments() {
             return None;
         }
         let body_index = 0;
-        let body = args.get(body_index).unwrap();
+        let body = ctx.arguments.get(body_index).unwrap().to_string();
         let mut and = true;
         let mut failed = false;
         let mut exprs: Vec<Expression> = vec![];
-        for (pos, arg) in args.iter().enumerate() {
+        for (pos, arg) in ctx.arguments.clone().iter().enumerate() {
             if pos == body_index {
                 continue;
             }
-            match parse(arg.as_str(), state) {
+            match self.parse(arg.as_str(), &mut ctx) {
                 Some(ParseResult::Expr(expr)) => exprs.push(expr),
                 Some(ParseResult::Rule(rule)) => and = rule == ExpressionRule::BooleanAnd,
                 None => failed = true,
@@ -76,18 +68,28 @@ impl Extension for Conditional {
         if failed {
             return None;
         }
-        let platform = get_platform(state);
+        let platform = get_platform();
+        if platform == Platform::Unknown {
+            self.add_warning("Could not infer platform", &mut ctx);
+        }
+
         if and {
             for expr in exprs {
-                if !expr.check(fmt, platform, state) {
+                if !expr.check(&mut ctx, self, platform) {
                     return None;
                 }
             }
-            Some(state.translate_no_boilerplate(&body.to_string(), "Conditinal extension"))
+            Some(
+                ctx.document
+                    .translate_no_boilerplate(&body, "Conditinal extension"),
+            )
         } else {
             for expr in exprs {
-                if expr.check(fmt, platform, state) {
-                    return Some(state.translate_no_boilerplate(&body.to_string(), "Conditinal extension"));
+                if expr.check(&mut ctx, self, platform) {
+                    return Some(
+                        ctx.document
+                            .translate_no_boilerplate(&body, "Conditinal extension"),
+                    );
                 }
             }
             None
@@ -107,120 +109,138 @@ impl Extension for Conditional {
     }
 }
 
-fn parse(text: &str, state: &mut DocumentState) -> Option<ParseResult> {
-    if let Some(rule) = parse_special(text) {
-        Some(ParseResult::Rule(rule))
-    } else {
-        parse_expr(text, state).map(ParseResult::Expr)
+impl Conditional {
+    fn parse(&self, text: &str, ctx: &mut Context) -> Option<ParseResult> {
+        if let Some(rule) = self.parse_special(text) {
+            Some(ParseResult::Rule(rule))
+        } else {
+            self.parse_expr(text, ctx).map(ParseResult::Expr)
+        }
     }
 
-    
-}
-
-fn parse_special(text: &str) -> Option<ExpressionRule> {
-    lazy_static! {
-        static ref AND_PATTERN: Regex = Regex::new(r"^[ \t]*all[ \t]*$").unwrap();
-        static ref OR_PATTERN: Regex = Regex::new(r"^[ \t]*((one *of)|(or))[ \t]*$").unwrap();
-    }
-    if AND_PATTERN.is_match(text) {
-        Some(ExpressionRule::BooleanAnd)
-    } else if OR_PATTERN.is_match(text) {
-        Some(ExpressionRule::BooleanOr)
-    } else {
-        None
-    }
-}
-
-fn parse_expr(text: &str, state: &mut DocumentState) -> Option<Expression> {
-    lazy_static! {
-        static ref MAIN_PATTERN: Regex =
-            Regex::new(r"^[ \t]*([\w_]+?)[ \t]*(?:(is not|isnt|isn't|!=)|(is|==|=))[ \t]*([\w_]+)[ \t]*$").unwrap();
-        static ref CONDITIONAL_PATTERN: Regex =
-            Regex::new(r"^[ \t]*conditional_[\w_]*[ \t]*(?:(?:is not|isnt|isn't|!=)|(?:is|==|=))[ \t]*(.*?)[ \t]*$").unwrap();
+    fn parse_special(&self, text: &str) -> Option<ExpressionRule> {
+        lazy_static! {
+            static ref AND_PATTERN: Regex = Regex::new(r"^[ \t]*all[ \t]*$").unwrap();
+            static ref OR_PATTERN: Regex = Regex::new(r"^[ \t]*((one *of)|(or))[ \t]*$").unwrap();
+        }
+        if AND_PATTERN.is_match(text) {
+            Some(ExpressionRule::BooleanAnd)
+        } else if OR_PATTERN.is_match(text) {
+            Some(ExpressionRule::BooleanOr)
+        } else {
+            None
+        }
     }
 
-    if let Some(captures) = MAIN_PATTERN.captures(text) {
-        let mut key = captures.get(1)?.as_str().to_string();
-        let xnor = captures.get(3).is_some();
-        let mut val = captures.get(4)?.as_str().to_string();
-        if key.starts_with("conditional_") {
-            if let Some(val_capture) = CONDITIONAL_PATTERN.captures(text) {
-                if let Some(search_val) = val_capture.get(1) {
-                    Some(Expression::StringEquality(
-                        key,
-                        search_val.as_str().to_string(),
-                        xnor,
-                    ))
+    fn parse_expr(&self, text: &str, ctx: &mut Context) -> Option<Expression> {
+        lazy_static! {
+            static ref MAIN_PATTERN: Regex =
+                Regex::new(r"^[ \t]*([\w_]+?)[ \t]*(?:(is not|isnt|isn't|!=)|(is|==|=))[ \t]*([\w_]+)[ \t]*$").unwrap();
+            static ref CONDITIONAL_PATTERN: Regex =
+                Regex::new(r"^[ \t]*conditional_[\w_]*[ \t]*(?:(?:is not|isnt|isn't|!=)|(?:is|==|=))[ \t]*(.*?)[ \t]*$").unwrap();
+        }
+
+        if let Some(captures) = MAIN_PATTERN.captures(text) {
+            let mut key = captures.get(1)?.as_str().to_string();
+            let xnor = captures.get(3).is_some();
+            let mut val = captures.get(4)?.as_str().to_string();
+            if key.starts_with("conditional_") {
+                if let Some(val_capture) = CONDITIONAL_PATTERN.captures(text) {
+                    if let Some(search_val) = val_capture.get(1) {
+                        Some(Expression::StringEquality(
+                            key,
+                            search_val.as_str().to_string(),
+                            xnor,
+                        ))
+                    } else {
+                        self.add_error(
+                            &format!("Could not find value to search for with key {}", key),
+                            ctx,
+                        );
+                        None
+                    }
                 } else {
-                    state.add_error(&format!(
-                        "Could not find value to search for with key {}",
-                        key
-                    ));
+                    self.add_error(
+                        &format!("Could not find value to search for with key {}", key),
+                        ctx,
+                    );
                     None
                 }
             } else {
-                state.add_error(&format!(
-                    "Could not find value to search for with key {}",
-                    key
-                ));
-                None
-            }
-        } else {
-            key = key.to_lowercase();
-            val = val.to_lowercase();
-            if key == "platform" || key == "os" {
-                match val.as_str() {
-                    "macos" | "mac" => Some(Expression::PlatformEquality(
-                        Platform::Unix(UnixVariant::MacOs),
-                        xnor,
-                    )),
-                    "windows" | "win" => {
-                        Some(Expression::PlatformEquality(Platform::Windows, xnor))
-                    }
-                    "linux" => Some(Expression::PlatformEquality(
-                        Platform::Unix(UnixVariant::Linux),
-                        xnor,
-                    )),
-                    "unix" => Some(Expression::PlatformEquality(
-                        Platform::Unix(UnixVariant::Other),
-                        xnor,
-                    )),
-                    "web" | "wasm" => Some(Expression::PlatformEquality(Platform::Web, xnor)),
-                    _ => {
-                        state.add_error(&format!(
+                key = key.to_lowercase();
+                val = val.to_lowercase();
+                if key == "platform" || key == "os" {
+                    match val.as_str() {
+                        "macos" | "mac" => Some(Expression::PlatformEquality(
+                            Platform::Unix(UnixVariant::MacOs),
+                            xnor,
+                        )),
+                        "windows" | "win" => {
+                            Some(Expression::PlatformEquality(Platform::Windows, xnor))
+                        }
+                        "linux" => Some(Expression::PlatformEquality(
+                            Platform::Unix(UnixVariant::Linux),
+                            xnor,
+                        )),
+                        "unix" => Some(Expression::PlatformEquality(
+                            Platform::Unix(UnixVariant::Other),
+                            xnor,
+                        )),
+                        "web" | "wasm" => Some(Expression::PlatformEquality(Platform::Web, xnor)),
+                        _ => {
+                            self.add_error(&format!(
                             "Unknown platform: {}\nAllowed values: Windows/Win, MacOS/Mac, Linux, Unix, Web/Wasm",
                             val
-                        ));
-                        None
+                        ), ctx);
+                            None
+                        }
                     }
-                }
-            } else if ["target", "output", "file", "type", "extension", "format"]
-                .contains(&key.as_str())
-            {
-                match val.as_str() {
-                    "html" => Some(Expression::OutputEquality(OutputFormat::Html, xnor)),
-                    "latex" | "tex" => Some(Expression::OutputEquality(OutputFormat::Latex, xnor)),
-                    "lambdanote" | "λnote" => {
-                        Some(Expression::OutputEquality(OutputFormat::LambdaNote, xnor))
-                    }
-                    _ => {
-                        state.add_error(&format!(
+                } else if ["target", "output", "file", "type", "extension", "format"]
+                    .contains(&key.as_str())
+                {
+                    match val.as_str() {
+                        "html" => Some(Expression::OutputEquality(OutputFormat::Html, xnor)),
+                        "latex" | "tex" => {
+                            Some(Expression::OutputEquality(OutputFormat::Latex, xnor))
+                        }
+                        "lambdanote" | "λnote" => {
+                            Some(Expression::OutputEquality(OutputFormat::LambdaNote, xnor))
+                        }
+                        _ => {
+                            self.add_error(&format!(
                             "Unknown file type: {}\nAllowed values: HTML, LaTeX/TeX, Lambdanote/λnote",
                             val
-                        ));
-                        None
+                        ), ctx);
+                            None
+                        }
                     }
-                }
-            } else {
-                state.add_error(&format!("Unknown key: {}\n\
+                } else {
+                    self.add_error(&format!("Unknown key: {}\n\
                 Valid keys: platform/os, target/output/file/type/extension/format, and metadata fields starting with conditional_, \
-                and keywords 'all', 'one of'/'or'", key));
-                None
+                and keywords 'all', 'one of'/'or'", key), ctx);
+                    None
+                }
             }
+        } else {
+            self.add_error(&format!("Invalid expression: {}", text), ctx);
+            None
         }
+    }
+}
+
+fn get_platform() -> Platform {
+    if cfg!(target_os = "macos") {
+        Platform::Unix(UnixVariant::MacOs)
+    } else if cfg!(target_family = "windows") {
+        Platform::Windows
+    } else if cfg!(target_os = "linux") {
+        Platform::Unix(UnixVariant::Linux)
+    } else if cfg!(target_family = "unix") {
+        Platform::Unix(UnixVariant::Other)
+    } else if cfg!(target_family = "wasm") {
+        Platform::Web
     } else {
-        state.add_error(&format!("Invalid expression: {}", text));
-        None
+        Platform::Unknown
     }
 }
 
@@ -241,12 +261,7 @@ enum Expression {
 }
 
 impl Expression {
-    fn check(
-        &self,
-        document_format: OutputFormat,
-        document_platform: Platform,
-        document_state: &mut DocumentState,
-    ) -> bool {
+    fn check(&self, ctx: &mut Context, extension: &Conditional, document_platform: Platform) -> bool {
         match self {
             Self::PlatformEquality(platform, xnor) => {
                 if platform == &Platform::Unix(UnixVariant::Other) {
@@ -258,12 +273,12 @@ impl Expression {
                     (*platform == document_platform) ^ (!xnor)
                 }
             }
-            Self::OutputEquality(format, xnor) => (*format == document_format) ^ (!xnor),
+            Self::OutputEquality(format, xnor) => (*format == ctx.output_format) ^ (!xnor),
             Self::StringEquality(key, value, xnor) => {
-                if let Some(val) = document_state.metadata.get(key) {
+                if let Some(val) = ctx.document.metadata.get(key) {
                     (val == value) ^ (!xnor)
                 } else {
-                    document_state.add_warning(&format!("Key {} doesn't exist!", key));
+                    extension.add_warning(&format!("Key {} doesn't exist!", key), ctx);
                     !xnor
                 }
             }
@@ -284,21 +299,4 @@ enum UnixVariant {
     Linux,
     MacOs,
     Other,
-}
-
-fn get_platform(state: &mut DocumentState) -> Platform {
-    if cfg!(target_os = "macos") {
-        Platform::Unix(UnixVariant::MacOs)
-    } else if cfg!(target_family = "windows") {
-        Platform::Windows
-    } else if cfg!(target_os = "linux") {
-        Platform::Unix(UnixVariant::Linux)
-    } else if cfg!(target_family = "unix") {
-        Platform::Unix(UnixVariant::Other)
-    } else if cfg!(target_family = "wasm") {
-        Platform::Web
-    } else {
-        state.add_warning("Could not infer platform");
-        Platform::Unknown
-    }
 }

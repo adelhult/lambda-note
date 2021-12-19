@@ -1,6 +1,5 @@
-use crate::extensions::{Extension, ExtensionVariant};
-use crate::translator::{DocumentState, OutputFormat};
-use crate::Origin;
+use crate::extensions::{Context, Extension, ExtensionVariant};
+use crate::translator::OutputFormat;
 use latex2mathml::{latex_to_mathml, DisplayStyle};
 
 /// **Native extension**: make math equations
@@ -21,17 +20,10 @@ impl Extension for Math {
         "1".to_string()
     }
 
-    fn call(
-        &self,
-        args: Vec<String>,
-        output_format: OutputFormat,
-        variant: ExtensionVariant,
-        state: &mut DocumentState,
-        origin: &Origin,
-    ) -> Option<String> {
-        match output_format {
-            OutputFormat::Latex => latex(args, variant, state),
-            OutputFormat::Html => html(args, variant, state),
+    fn call(&self, mut ctx: Context) -> Option<String> {
+        match ctx.output_format {
+            OutputFormat::Latex => latex(&mut ctx),
+            OutputFormat::Html => html(&mut ctx),
             _ => panic!("Not implemented yet"),
         }
     }
@@ -49,17 +41,13 @@ impl Extension for Math {
     }
 }
 
-fn html(
-    args: Vec<String>,
-    variant: ExtensionVariant,
-    state: &mut DocumentState,
-) -> Option<String> {
-    state.import(r#"<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>"#);
+fn html(ctx: &mut Context) -> Option<String> {
+    ctx.document.import(r#"<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js"></script>"#);
 
-    let value = args.get(0)?;
+    let value = ctx.arguments.get(0)?;
     latex_to_mathml(
         value,
-        match variant {
+        match ctx.variant {
             ExtensionVariant::Block => DisplayStyle::Block,
             ExtensionVariant::Inline => DisplayStyle::Inline,
         },
@@ -67,13 +55,9 @@ fn html(
     .ok()
 }
 
-fn latex(
-    args: Vec<String>,
-    variant: ExtensionVariant,
-    _: &mut DocumentState,
-) -> Option<String> {
-    let value = args.get(0).map_or_else(|| "", |content| content);
-    Some(match variant {
+fn latex(ctx: &Context) -> Option<String> {
+    let value = ctx.arguments.get(0).map_or_else(|| "", |content| content);
+    Some(match ctx.variant {
         ExtensionVariant::Block => format!("\\begin{{equation}}\n{}\n\\end{{equation}}", value),
         ExtensionVariant::Inline => format!("${}$", value),
     })
