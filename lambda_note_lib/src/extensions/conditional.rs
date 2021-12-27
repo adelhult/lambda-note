@@ -81,14 +81,14 @@ impl Extension for Conditional {
             }
             Some(
                 ctx.document
-                    .translate_no_boilerplate(&body, "Conditinal extension"),
+                    .translate_no_template(&body, "Conditinal extension"),
             )
         } else {
             for expr in exprs {
                 if expr.check(&mut ctx, self, platform) {
                     return Some(
                         ctx.document
-                            .translate_no_boilerplate(&body, "Conditinal extension"),
+                            .translate_no_template(&body, "Conditinal extension"),
                     );
                 }
             }

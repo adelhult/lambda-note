@@ -65,7 +65,7 @@ impl Extension for Link {
                     "<a href={url}{style}>{label}</a>",
                     url = url_text,
                     label = match label {
-                        Some(text) => ctx.document.translate_no_boilerplate(text, "Link extension"),
+                        Some(text) => ctx.document.translate_no_template(text, "Link extension"),
                         None => url_text.to_string(),
                     },
                     style = match color {
@@ -87,7 +87,7 @@ impl Extension for Link {
                 }
 
                 Some(match label {
-                    Some(text) => format!("\\href{{{}}}{{{}}}", url_text, ctx.document.translate_no_boilerplate(text, "Link extension")),
+                    Some(text) => format!("\\href{{{}}}{{{}}}", url_text, ctx.document.translate_no_template(text, "Link extension")),
                     None => format!("\\url{{{}}}", url_text),
                 })
             }

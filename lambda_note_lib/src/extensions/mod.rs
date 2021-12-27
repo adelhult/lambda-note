@@ -64,6 +64,7 @@ pub trait Extension {
     fn supports_inline(&self) -> bool;
     fn interests(&self) -> Vec<String>;
 
+    /// Add an error to the current document state
     fn add_error(&self, description: &str, ctx: &mut Context) {
         let document_name = match &ctx.origin.name {
             OriginName::Filename(name) => name,
@@ -80,6 +81,7 @@ pub trait Extension {
         ));
     }
 
+    /// Add a warning to the current document state
     fn add_warning(&self, description: &str, ctx: &mut Context) {
         let document_name = match &ctx.origin.name {
             OriginName::Filename(name) => name,
