@@ -28,7 +28,7 @@ pub trait Translator {
     fn inline(&self, inline: &Inline) -> String;
 
     /// generate a boilerplate document given the content and the rest of the document state
-    fn boilerplate(
+    fn template(
         &self,
         content: &str,
         top: &str,
@@ -80,7 +80,7 @@ impl<'a> DocumentState {
         let result = self.translate_no_boilerplate(source, doc_name);
         // TODO: the translator should not be cloned,
         // there is def. a better way to do this.
-        self.translator.boilerplate(
+        self.translator.template(
             &result,
             &self.top,
             &self.bottom,
@@ -94,7 +94,8 @@ impl<'a> DocumentState {
 
         for block in parse_doc(source, doc_name) {
             if let Some(s) = self.translate_block(block) {
-                output.push_str(&format!("{}\n", s))
+                output.push_str(&s);
+                output.push('\n');
             }
         }
 

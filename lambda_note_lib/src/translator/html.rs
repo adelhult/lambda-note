@@ -37,7 +37,7 @@ impl Translator for Html {
         }
     }
 
-    fn boilerplate(
+    fn template(
         &self,
         content: &str,
         top: &str,

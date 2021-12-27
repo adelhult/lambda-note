@@ -29,7 +29,7 @@ impl Translator for Latex {
         }
     }
 
-    fn boilerplate(
+    fn template(
         &self,
         content: &str,
         top: &str,
