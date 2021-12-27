@@ -19,14 +19,22 @@ type LineNumber = usize;
 #[derive(Debug, PartialEq, Clone)]
 pub struct Origin {
     pub line_number: usize,
-    pub document_name: String,
+    pub name: OriginName,
+}
+
+/// source texts can, apart from files, come from macro expansions inside
+/// of extensions, so we would need to keep track of who spawned them 
+#[derive(Debug, PartialEq, Clone)]
+pub enum OriginName {
+    Filename(String),
+    Expansion(Box<OriginName>)
 }
 
 impl Origin {
     pub fn new(line_number: usize, document_name: &str) -> Self {
         Origin {
             line_number,
-            document_name: document_name.to_string()
+            name: OriginName::Filename(document_name.to_string())
         }
     }
 }

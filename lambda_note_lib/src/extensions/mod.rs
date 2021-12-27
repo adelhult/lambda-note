@@ -6,7 +6,7 @@ mod link;
 mod maketitle;
 mod math;
 
-use crate::parser::Origin;
+use crate::parser::{Origin, OriginName};
 use crate::translator::{DocumentState, OutputFormat};
 use code::Code;
 use conditional::Conditional;
@@ -65,24 +65,34 @@ pub trait Extension {
     fn interests(&self) -> Vec<String>;
 
     fn add_error(&self, description: &str, ctx: &mut Context) {
+        let document_name = match &ctx.origin.name {
+            OriginName::Filename(name) => name,
+            _ => "MACRO EXPANSION", // todo, should display the entire expansion
+        };
+
         ctx.document.errors.push(format!(
             "Error from {name} expression: {description}.\n\
                 (Line {line_number} of {document_name}",
             name = self.name(),
             description = description,
             line_number = ctx.origin.line_number,
-            document_name = ctx.origin.document_name
+            document_name = document_name,
         ));
     }
 
     fn add_warning(&self, description: &str, ctx: &mut Context) {
+        let document_name = match &ctx.origin.name {
+            OriginName::Filename(name) => name,
+            _ => "MACRO EXPANSION", // todo, should display the entire expansion
+        };
+
         ctx.document.warnings.push(format!(
             "Warning from {name} expression: {description}.\n\
                 (Line {line_number} of {document_name}",
             name = self.name(),
             description = description,
             line_number = ctx.origin.line_number,
-            document_name = ctx.origin.document_name
+            document_name = document_name,
         ));
     }
 }
