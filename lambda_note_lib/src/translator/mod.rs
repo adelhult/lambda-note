@@ -1,4 +1,5 @@
 mod html;
+mod web_preview;
 mod latex;
 mod utils;
 
@@ -12,6 +13,7 @@ use std::{
 
 pub use html::Html;
 pub use latex::Latex;
+pub use web_preview::WebPreview;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OutputFormat {

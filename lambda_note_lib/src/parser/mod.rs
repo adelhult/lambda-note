@@ -14,7 +14,7 @@ use inline::parse_inline;
 type LineNumber = usize;
 
 /// Describes the origin of a block
-/// i.e the line number and the document name or the name of 
+/// i.e the line number and the document name or the name of
 /// the extension macro that created it
 #[derive(Debug, PartialEq, Clone)]
 pub struct Origin {
@@ -23,18 +23,18 @@ pub struct Origin {
 }
 
 /// source texts can, apart from files, come from macro expansions inside
-/// of extensions, so we would need to keep track of who spawned them 
+/// of extensions, so we would need to keep track of who spawned them
 #[derive(Debug, PartialEq, Clone)]
 pub enum OriginName {
     Filename(String),
-    Expansion(Box<OriginName>)
+    Expansion(Box<OriginName>),
 }
 
 impl Origin {
     pub fn new(line_number: usize, document_name: &str) -> Self {
         Origin {
             line_number,
-            name: OriginName::Filename(document_name.to_string())
+            name: OriginName::Filename(document_name.to_string()),
         }
     }
 }
@@ -47,6 +47,20 @@ pub enum Block {
     List(Vec<Inline>, Origin), // TODO, support ordered lists
     Divider(Origin),           // a section divider, i.e a new page
     Extension(String, Vec<String>, Origin),
+}
+
+impl Block {
+    pub fn get_line_number(&self) -> LineNumber {
+        match self {
+            Block::Heading(_, _, origin) => origin,
+            Block::Paragraph(_, origin) => origin,
+            Block::Metadata(_, _, origin) => origin,
+            Block::List(_, origin) => origin,
+            Block::Divider(origin) => origin,
+            Block::Extension(_, _, origin) => origin,
+        }
+        .line_number
+    }
 }
 
 impl fmt::Display for Block {
@@ -268,7 +282,6 @@ impl fmt::Display for EscapeChar {
 
 type Lines<'a> = iter::Peekable<Zip<str::Lines<'a>, RangeFrom<LineNumber>>>;
 
-
 pub fn parse_doc(source: &str, doc_name: &str) -> Vec<Block> {
     let mut lines = source.lines().zip(1..).peekable();
     let mut text: Vec<(String, LineNumber)> = vec![];
@@ -305,7 +318,7 @@ pub fn parse_doc(source: &str, doc_name: &str) -> Vec<Block> {
 }
 
 /// Consumes the text buffer and returns a list of paragraph blocks
-fn consume_text_buffer(text: &mut Vec<(String, LineNumber)>, doc_name: &str) -> Vec<Block> {    
+fn consume_text_buffer(text: &mut Vec<(String, LineNumber)>, doc_name: &str) -> Vec<Block> {
     let paragraphs = text
         .split(|(s, _)| s.trim().is_empty()) // get each paragraph
         .filter_map(|lines| {
@@ -322,24 +335,23 @@ fn consume_text_buffer(text: &mut Vec<(String, LineNumber)>, doc_name: &str) -> 
             let block = Block::Paragraph(parse_inline(&text), Origin::new(*line_number, doc_name));
             // remove empty paragraph blocks
             if is_empty(&block) {
-                return None; 
+                return None;
             } else {
                 Some(block)
             }
-        }) 
-
+        })
         .collect();
 
     // empty the buffer
     text.clear();
-    
+
     paragraphs
 }
 
 /// returns true if the paragraph contains any elements
 /// otherwise false.
 fn is_empty(block: &Block) -> bool {
-    if let Block::Paragraph(text, _) = block{
+    if let Block::Paragraph(text, _) = block {
         text.is_empty()
     } else {
         false

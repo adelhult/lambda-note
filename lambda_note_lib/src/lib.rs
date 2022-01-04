@@ -4,7 +4,7 @@ mod translator;
 mod extensions;
 
 pub use parser::{parse_doc, Block, EscapeChar, Inline, Tag, Origin};
-pub use translator::{DocumentState, OutputFormat, Translator, Html, Latex};
+pub use translator::{DocumentState, OutputFormat, Translator, Html, Latex, WebPreview};
 
 #[cfg(test)]
 mod tests {
