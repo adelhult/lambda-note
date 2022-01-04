@@ -1,6 +1,6 @@
-use lambda_note_lib::{DocumentState, Html, Latex, Translator};
+use lambda_note_lib::{DocumentState, Html, Latex, Translator, WebPreview};
 use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
-use std::process::{Command, Stdio};
+use std::process::Command;
 use std::sync::mpsc::channel;
 use std::{
     env, fs,
@@ -117,7 +117,7 @@ fn live_preview(args: Vec<String>) {
         .watch(&input_file, RecursiveMode::Recursive)
         .unwrap();
 
-    translate(&input_file, tempfile.path(), Html);
+    translate(&input_file, tempfile.path(), WebPreview::new());
 
     if let Err(error) = Command::new("cmd")
         .arg("/C")
