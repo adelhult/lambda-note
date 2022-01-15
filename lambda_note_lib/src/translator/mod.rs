@@ -1,7 +1,7 @@
 mod html;
-mod web_preview;
 mod latex;
 mod utils;
+mod web_preview;
 
 use crate::extensions::{get_native_extensions, Context, Extension, ExtensionVariant};
 use crate::{parse_doc, Block, Inline, Origin, Tag};
@@ -112,9 +112,14 @@ impl<'a> DocumentState {
         variant: ExtensionVariant,
         origin: &Origin,
     ) -> Option<String> {
-        let extension = self.extensions.get(symbol)?.clone();
-        extension.call(Context::new(args, variant, self, origin.clone()))
-        // TODO: handle errors, and is rc really the right choice?
+        match self.extensions.get(symbol).cloned() {
+            None => {
+                self.errors
+                    .push(format!("No extension found with the name of {}", symbol));
+                None
+            }
+            Some(extension) => extension.call(Context::new(args, variant, self, origin.clone())),
+        }
     }
 
     /// Add a new metadata field to the document state
