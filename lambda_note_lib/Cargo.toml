@@ -13,4 +13,5 @@ serde_json = "1.0"
 regex = "1.4.5"
 tst = "0.10.1"
 latex2mathml = "0.2.3"
+evalexpr = "7.0.0"
 syntect = { version = "4.2", default-features = false, features = ["default-fancy"]}
