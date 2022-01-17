@@ -157,8 +157,8 @@ impl<'a> DocumentState {
     fn translate_inline(&mut self, inline: &Inline, origin: &Origin) -> String {
         if let Inline::Extension(symbol, args) = inline {
             return self
-                .translate_extension(&symbol, args.clone(), ExtensionVariant::Inline, origin)
-                .unwrap_or("".to_string());
+                .translate_extension(symbol, args.clone(), ExtensionVariant::Inline, origin)
+                .unwrap_or_else(|| "".to_string());
         }
 
         self.translator.inline(inline)

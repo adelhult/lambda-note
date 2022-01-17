@@ -35,7 +35,7 @@ fn parse_metadata(lines: &mut Lines, doc_name: &str) -> Option<Block> {
 
 fn parse_divider(lines: &mut Lines, doc_name: &str) -> Option<Block> {
     let (line, line_number) = lines.peek()?;
-    let line_number = line_number.clone();
+    let line_number = *line_number;
 
     line.trim_start().starts_with("===").then(|| {
         lines.next(); // consume the line
@@ -55,7 +55,7 @@ fn parse_extension(lines: &mut Lines, doc_name: &str) -> Option<Block> {
                 .unwrap();
     }
     let (line, line_number) = lines.peek()?;
-    let line_number = line_number.clone();
+    let line_number = *line_number;
 
     let captures = RULE.captures(line)?;
     let divider_length = captures.name("div")?.as_str().chars().count();

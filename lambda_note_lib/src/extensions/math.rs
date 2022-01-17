@@ -22,7 +22,7 @@ impl Extension for Math {
 
     fn call(&self, mut ctx: Context) -> Option<String> {
         match ctx.output_format {
-            OutputFormat::Latex => latex(&mut ctx),
+            OutputFormat::Latex => latex(&ctx),
             OutputFormat::Html => html(&mut ctx),
             _ => panic!("Not implemented yet"),
         }

@@ -100,7 +100,7 @@ impl<'a> ParserState<'a> {
 
             if let Inline::Begin(tag) = &self.result[i] {
                 if tag == missplaced_tag {
-                    self.result[i] = Inline::Text(tag_to_string(&tag));
+                    self.result[i] = Inline::Text(tag_to_string(tag));
                     self.open_tags.pop();
                 }
             }
@@ -230,13 +230,13 @@ fn char_to_tag(c: char) -> Option<Tag> {
 }
 
 fn tag_to_string(tag: &Tag) -> String {
-    match tag {
-        &Tag::Bold => "**",
-        &Tag::Italic => "//",
-        &Tag::Strikethrough => "~~",
-        &Tag::Subscript => "__",
-        &Tag::Superscript => "^^",
-        &Tag::Underline => "==",
+    match *tag {
+        Tag::Bold => "**",
+        Tag::Italic => "//",
+        Tag::Strikethrough => "~~",
+        Tag::Subscript => "__",
+        Tag::Superscript => "^^",
+        Tag::Underline => "==",
     }
     .to_string()
 }

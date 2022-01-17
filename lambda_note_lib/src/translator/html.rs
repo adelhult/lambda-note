@@ -29,10 +29,10 @@ impl Translator for Html {
 
     fn inline(&self, inline: &Inline) -> String {
         match inline {
-            Inline::Begin(tag) => format!("<{}>", tag_to_string(&tag)),
-            Inline::End(tag) => format!("</{}>", tag_to_string(&tag)),
+            Inline::Begin(tag) => format!("<{}>", tag_to_string(tag)),
+            Inline::End(tag) => format!("</{}>", tag_to_string(tag)),
             Inline::Escaped(escaped) => escaped.to_string(),
-            Inline::Text(content) => self.escape_str(&content),
+            Inline::Text(content) => self.escape_str(content),
             _ => panic!("Failed to translate inline element {:?}", inline),
         }
     }
@@ -48,7 +48,7 @@ impl Translator for Html {
         
         let mut import_str = String::new();
         for import in imports {
-            import_str.push_str(&import);
+            import_str.push_str(import);
             import_str.push('\n');
         }
 

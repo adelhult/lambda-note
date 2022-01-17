@@ -335,7 +335,7 @@ fn consume_text_buffer(text: &mut Vec<(String, LineNumber)>, doc_name: &str) -> 
             let block = Block::Paragraph(parse_inline(&text), Origin::new(*line_number, doc_name));
             // remove empty paragraph blocks
             if is_empty(&block) {
-                return None;
+                None
             } else {
                 Some(block)
             }

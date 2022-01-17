@@ -45,7 +45,7 @@ impl<'a> Context<'a> {
             arguments: args,
             output_format: document.get_output_format(),
             document,
-            origin: origin,
+            origin,
             variant,
         }
     }
