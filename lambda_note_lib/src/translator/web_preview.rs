@@ -50,7 +50,7 @@ impl Translator for WebPreview {
     ) -> String {
         let mut import_str = String::new();
         for import in imports {
-            import_str.push_str(&import);
+            import_str.push_str(import);
             import_str.push('\n');
         }
 
