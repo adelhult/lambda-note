@@ -149,7 +149,7 @@ impl<'a> DocumentState {
             Block::Paragraph(text, origin) => (text, origin),
             _ => panic!("Can not translate blocks without inline elements"),
         };
-        text.into_iter()
+        text.iter()
             .map(|i| self.translate_inline(i, origin))
             .collect()
     }

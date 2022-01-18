@@ -27,7 +27,7 @@ impl Extension for Code {
 
     fn call(&self, mut ctx: Context) -> Option<String> {
         match ctx.output_format {
-            OutputFormat::Html => html(&mut ctx),
+            OutputFormat::Html => html(&ctx),
             OutputFormat::Latex => latex(&mut ctx),
             _ => None,
         }

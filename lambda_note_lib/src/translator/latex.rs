@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::{Block, DocumentState, EscapeChar, Inline, OutputFormat, Tag, Translator};
-use super::utils::indent;
 /// A translator that transpiles into LaTeX code.
 pub struct Latex;
 
@@ -49,12 +48,12 @@ impl Translator for Latex {
 \end{{document}}
             "#,
             imports = imports.iter().fold(String::new(), |acc, s| acc + s + "\n"),
-            top = indent(top, 1),
-            bottom = indent(bottom, 1),
+            top = top,
+            bottom = bottom,
             class = metadata
                 .get("documentclass")
                 .unwrap_or(&"article".to_string()),
-            content = indent(content, 1)
+            content = content,
         )
     }
 

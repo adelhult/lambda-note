@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
 use super::{Block, DocumentState, Inline, OutputFormat, Tag, Translator};
-use super::utils::indent;
 
 /// A translator that transpiles into HTML code
 pub struct Html;
@@ -140,12 +139,12 @@ impl Translator for Html {
 </div>
 </body>
 </html>"#,
-            imports = indent(&import_str,  2),
-            top = indent(top, 2),
-            bottom = indent(bottom, 2),
+            imports = import_str,
+            top = top,
+            bottom = bottom,
             language = metadata.get("language").unwrap_or(&"en".to_string()),
             title = metadata.get("title").unwrap_or(&"Document".to_string()),
-            content = indent(content, 2)
+            content = content,
         )
     }
 

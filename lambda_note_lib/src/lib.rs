@@ -1,5 +1,18 @@
-mod parser;
+//! A simple, highly extendable, markup language
+//! 
+//! λnote is a markup language with a familiar syntax to Markdown, but with the 
+//! the addition of many more inline text styles and
+//! a powerful built-in extensions system.
+//! 
+//! # Quick Start
+//! ```
+//! use lambda_note_lib::{DocumentState, Html};
+//!  
+//! let mut document = DocumentState::new(Html);
+//! let result = document.translate("# Hello\n \\lambdanote!", "test");
+//! ```
 
+mod parser;
 mod translator;
 mod extensions;
 
