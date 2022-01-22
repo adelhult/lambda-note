@@ -30,9 +30,7 @@ impl Translator for WebPreview {
     }
 
     fn block(&self, state: &mut DocumentState, block: Block) -> Option<String> {
-        let line_number = block.get_line_number();
-        let html = self.translator.block(state, block)?;
-        Some(format!("<a name=\"{}\"></a>\n{}", line_number, html))
+        self.translator.block(state, block)
     }
 
     fn inline(&self, inline: &Inline) -> String {
@@ -139,6 +137,26 @@ impl Translator for WebPreview {
                 if (event.data === "reload")
                     window.location.reload()
         }}); 
+    </script>
+    <script>
+        // any references to local files will be broken due to
+        // the browsers origin policy. To fix this, we host a server at
+        // localhost:5432, and use the following code updates all href and src
+        // tags in the page to point to the local server instead of directly to the local file.
+        document.addEventListener("DOMContentLoaded", function () {{
+            document.body.querySelectorAll('[href], [src]').forEach(node => {{
+                if (typeof node.href !== 'undefined') {{
+                    if (node.href.startsWith('http')) return;
+                    node.href = 'http://localhost:5432/' + node.href.replace("file:///", "");
+                }}
+
+                if (typeof node.src !== 'undefined') {{
+                    if (node.src.startsWith('http')) return;
+                    node.src = 'http://localhost:5432/' + node.src.replace("file:///", "");
+                }}
+            }});
+        }});
+
     </script>
     <title>{title}</title>
 </head>
