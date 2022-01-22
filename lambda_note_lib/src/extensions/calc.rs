@@ -1,4 +1,4 @@
-use super::{Context, Extension};
+use super::{Context, Extension, ExtensionVariant};
 use evalexpr::*;
 
 /// Calculation expressions
@@ -84,21 +84,26 @@ impl Extension for Calc {
 
         // actually evaluate the expression
         match eval_with_context_mut(expression, &mut eval_context) {
-            Ok(value) => output.push_str(&context.document.translate_no_template(
-                {
-                    let value_str = match value {
-                        Value::Empty => "".into(),
-                        v => v.to_string(),
-                    };
+            Ok(value) => {
+                let value_str = match value {
+                    Value::Empty => "".into(),
+                    v => v.to_string(),
+                };
 
-                    &if let Some(prefix) = prefix {
-                        format!("{} {}", prefix, value_str)
-                    } else {
-                        value_str
-                    }
-                },
-                "calc expression",
-            )),
+                let mut result = if let Some(prefix) = prefix {
+                    format!("{} {}", prefix, value_str)
+                } else {
+                    value_str
+                };
+                
+                // if we have a block extension we can translate the contents of the
+                // prefix and result without causing issues too.
+                if context.variant == ExtensionVariant::Block {
+                    result = context.document.translate_no_template(&result, "calc extension");
+                }
+
+                output.push_str(&result);
+            },
             Err(error) => {
                 self.add_error(&error.to_string(), &mut context);
                 return None;
