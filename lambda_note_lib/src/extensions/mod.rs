@@ -6,6 +6,7 @@ mod link;
 mod maketitle;
 mod math;
 mod calc;
+mod escape;
 
 use crate::parser::{Origin, OriginName};
 use crate::translator::{DocumentState, OutputFormat};
@@ -17,6 +18,7 @@ use link::Link;
 use maketitle::Maketitle;
 use math::Math;
 use calc::Calc;
+use escape::Escape;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, rc::Rc};
 
@@ -112,5 +114,6 @@ pub fn get_native_extensions() -> HashMap<String, Rc<dyn Extension>> {
     map.insert("conditional".to_string(), Rc::new(Conditional));
     map.insert("link".to_string(), Rc::new(Link));
     map.insert("calc".to_string(), Rc::new(Calc));
+    map.insert("escape".to_string(), Rc::new(Escape));
     map
 }

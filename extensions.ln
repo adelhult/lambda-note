@@ -73,8 +73,8 @@ includes the body if certain conditions are met, like platform and/or output for
 ## unescape
 Text that's not escaped by the translator (to include things like raw html/latex).
 
-## raw/escape/indentiy 
-just raw text to avoid lambda note's syntax getting in the way
+## ~~escape~~ 
+Just plain text to avoid lambda note's syntax getting in the way
 
 ## abstract
 Generate an abstract. Should take the language field into account too.

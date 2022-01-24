@@ -167,4 +167,9 @@ impl<'a> DocumentState {
     pub fn get_output_format(&self) -> OutputFormat {
         self.translator.output_format()
     }
+
+    /// Escape a string using the documents translator
+    pub fn escape_str(&self, data: &str) -> String {
+        self.translator.escape_str(data)
+    }
 }
