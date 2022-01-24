@@ -23,7 +23,7 @@ impl Extension for Raw {
             self.add_warning(&format!("Got {} arguments, expected 1.", nr_args), &mut ctx);
         }
 
-        Some(ctx.arguments.get(0)?)
+        Some(ctx.arguments.get(0)?.to_string())
     }
 
     fn supports_block(&self) -> bool {

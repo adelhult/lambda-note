@@ -48,7 +48,7 @@ pub struct DocumentState {
     pub metadata: HashMap<String, String>,
     pub warnings: Vec<String>,
     pub errors: Vec<String>,
-    extensions: HashMap<String, Rc<dyn Extension>>,
+    pub extensions: HashMap<String, Rc<dyn Extension>>,
     translator: Rc<dyn Translator>,
     imports: HashSet<String>,
     top: String,
