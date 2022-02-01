@@ -20,6 +20,10 @@ impl Extension for Calc {
         String::from("1")
     }
 
+    fn is_safe(&self) -> bool {
+        true
+    }
+
     fn call(&self, mut context: Context) -> Option<String> {
         let prefix = context.arguments.get(1).cloned();
         let expression = match context.arguments.get(0) {

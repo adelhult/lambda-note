@@ -16,6 +16,10 @@ impl Extension for Alias {
         "1".to_string()
     }
 
+    fn is_safe(&self) -> bool {
+        true
+    }
+
     fn call(&self, mut ctx: Context) -> Option<String> {
         if ctx.arguments.len() != 2 {
             self.add_error(

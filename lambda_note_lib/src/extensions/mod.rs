@@ -65,6 +65,7 @@ pub trait Extension {
     fn name(&self) -> String;
     fn description(&self) -> String;
     fn version(&self) -> String;
+    fn is_safe(&self) -> bool;
 
     fn call(&self, context: Context) -> Option<String>;
 

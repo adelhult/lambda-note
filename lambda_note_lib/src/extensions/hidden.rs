@@ -17,6 +17,10 @@ impl Extension for Hidden {
         "1".to_string()
     }
 
+    fn is_safe(&self) -> bool {
+        true
+    }
+
     fn call(&self, _: Context) -> Option<String> {
         None
     }

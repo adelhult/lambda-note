@@ -17,6 +17,10 @@ impl Extension for Raw {
         "1".to_string()
     }
 
+    fn is_safe(&self) -> bool {
+        false
+    }
+
     fn call(&self, mut ctx: Context) -> Option<String> {
         let nr_args = ctx.arguments.len();
         if nr_args != 1 {

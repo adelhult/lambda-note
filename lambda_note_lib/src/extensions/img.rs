@@ -28,6 +28,10 @@ impl Extension for Img {
         "1".to_string()
     }
 
+    fn is_safe(&self) -> bool {
+        true
+    }
+
     fn call(&self, mut ctx: Context) -> Option<String> {
         match ctx.output_format {
             OutputFormat::LambdaNote => todo!(),

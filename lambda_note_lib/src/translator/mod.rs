@@ -1,6 +1,5 @@
 mod html;
 mod latex;
-mod utils;
 mod web_preview;
 
 use crate::extensions::{get_native_extensions, Context, Extension, ExtensionVariant};
@@ -53,6 +52,7 @@ pub struct DocumentState {
     imports: HashSet<String>,
     top: String,
     bottom: String,
+    is_safe: bool,
 }
 
 impl<'a> DocumentState {
@@ -66,9 +66,14 @@ impl<'a> DocumentState {
             bottom: String::new(),
             extensions: get_native_extensions(),
             translator: Rc::new(translator),
+            is_safe: false,
             warnings: vec![],
             errors: vec![],
         }
+    }
+
+    pub fn set_safe_mode(&mut self, safe: bool) {
+        self.is_safe = safe;
     }
 
     pub fn import(&mut self, import: &str) {
@@ -118,7 +123,17 @@ impl<'a> DocumentState {
                     .push(format!("No extension found with the name of {}", symbol));
                 None
             }
-            Some(extension) => extension.call(Context::new(args, variant, self, origin.clone())),
+            Some(extension) => {
+                if self.is_safe && !extension.is_safe() {
+                    self.errors.push(format!(
+                        "Extension {} is not trusted in safe mode",
+                        extension.name()
+                    ));
+                    None
+                } else {
+                    extension.call(Context::new(args, variant, self, origin.clone()))
+                }
+            }
         }
     }
 

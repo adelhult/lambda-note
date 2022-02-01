@@ -45,6 +45,10 @@ impl Extension for Conditional {
     fn version(&self) -> String {
         "1".to_string()
     }
+    
+    fn is_safe(&self) -> bool {
+        true
+    }
 
     fn call(&self, mut ctx: Context) -> Option<String> {
         if ctx.no_arguments() {
