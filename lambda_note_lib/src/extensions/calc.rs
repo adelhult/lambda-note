@@ -125,6 +125,6 @@ impl Extension for Calc {
     }
 
     fn interests(&self) -> Vec<String> {
-        vec![String::from("calc-*")]
+        vec![String::from("calc_*")]
     }
 }
