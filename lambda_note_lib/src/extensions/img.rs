@@ -76,7 +76,7 @@ impl Img {
         Some(format!(
             "<img src=\"{filename}\" {alt} style=\"max-width:{width}%\">",
             filename = src.map_or_else(|| String::from(""), |s| s.to_owned()),
-            width = ctx.arguments.get(2).unwrap_or(&String::from("100"))
+            width = ctx.arguments.get(2).unwrap_or(&String::from("100")),
             alt = alt.map_or_else(|| String::from(""), |s| format!("alt=\"{}\"", s)),
         ))
     }
