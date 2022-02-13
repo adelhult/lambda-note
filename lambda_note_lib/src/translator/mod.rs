@@ -15,6 +15,7 @@ pub use latex::Latex;
 pub use web_preview::WebPreview;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
 pub enum OutputFormat {
     LambdaNote,
     Html,
@@ -49,9 +50,9 @@ pub struct DocumentState {
     pub errors: Vec<String>,
     pub extensions: HashMap<String, Rc<dyn Extension>>,
     translator: Rc<dyn Translator>,
-    imports: HashSet<String>,
-    top: String,
-    bottom: String,
+    pub imports: HashSet<String>,
+    pub top: String,
+    pub bottom: String,
     is_safe: bool,
 }
 
@@ -110,31 +111,40 @@ impl<'a> DocumentState {
     }
 
     /// translate an extension
-    fn translate_extension(
+    pub fn translate_extension(
         &mut self,
         symbol: &str,
         args: Vec<String>,
         variant: ExtensionVariant,
         origin: &Origin,
     ) -> Option<String> {
-        match self.extensions.get(symbol).cloned() {
-            None => {
-                self.errors
-                    .push(format!("No extension found with the name of {}", symbol));
-                None
-            }
-            Some(extension) => {
-                if self.is_safe && !extension.is_safe() {
-                    self.errors.push(format!(
-                        "Extension {} is not trusted in safe mode",
-                        extension.name()
-                    ));
-                    None
-                } else {
-                    extension.call(Context::new(args, variant, self, origin.clone()))
-                }
-            }
+
+        let extension = self.extensions.get(symbol).cloned();
+        if extension.is_none() {
+            self.errors
+                .push(format!("No extension found with the name of {}", symbol));
         }
+        let extension = extension?;
+
+        if self.is_safe && !extension.is_safe() {
+            self.errors.push(format!(
+                "Extension {} is not trusted in safe mode", extension.name()));
+            return None;
+        }
+
+        if variant == ExtensionVariant::Block && !extension.supports_block() {
+            self.errors.push(format!(
+                "Extension {} does not support block expressions", extension.name()));
+            return None;
+        }
+
+        if variant == ExtensionVariant::Inline && !extension.supports_inline() {
+            self.errors.push(format!(
+                "Extension {} does not support inline expressions", extension.name()));
+            return None;
+        }
+
+        extension.call(Context::new(args, variant, self, origin.clone()))
     }
 
     /// Add a new metadata field to the document state

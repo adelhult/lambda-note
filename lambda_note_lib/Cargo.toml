@@ -15,3 +15,4 @@ tst = "0.10.1"
 latex2mathml = "0.2.3"
 evalexpr = "7.0.0"
 syntect = { version = "4.2", default-features = false, features = ["default-fancy"]}
+wait-timeout = "0.2.0"

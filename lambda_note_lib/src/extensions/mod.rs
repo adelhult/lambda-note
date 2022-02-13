@@ -9,6 +9,8 @@ mod calc;
 mod escape;
 mod raw;
 mod alias;
+mod define;
+mod id;
 
 use crate::parser::{Origin, OriginName};
 use crate::translator::{DocumentState, OutputFormat};
@@ -21,6 +23,8 @@ use maketitle::Maketitle;
 use math::Math;
 use calc::Calc;
 use escape::Escape;
+use define::Define;
+use id::Id;
 use raw::Raw;
 use alias::Alias;
 use serde::{Deserialize, Serialize};
@@ -122,5 +126,7 @@ pub fn get_native_extensions() -> HashMap<String, Rc<dyn Extension>> {
     map.insert("escape".to_string(), Rc::new(Escape));
     map.insert("raw".to_string(), Rc::new(Raw));
     map.insert("alias".to_string(), Rc::new(Alias));
+    map.insert("define".to_string(), Rc::new(Define));
+    map.insert("id".to_string(), Rc::new(Id));
     map
 }
