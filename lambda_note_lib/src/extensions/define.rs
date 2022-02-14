@@ -9,7 +9,6 @@ use std::process::{Command, Stdio};
 use std::rc::Rc;
 use std::time::Duration;
 use wait_timeout::ChildExt;
-
 use super::ExtensionVariant;
 
 #[derive(Clone)]
@@ -110,8 +109,19 @@ fn get_timeout(ctx: &Context) -> f32 {
 /// Given a request struct, send a message to a child process and await
 /// a response string
 fn send<T: Serialize>(command: &str, timeout: f32, req: T) -> Result<String, Error> {
-    let mut child = Command::new("cmd")
-        .arg("/C")
+    let shell = if cfg!(target_os = "windows") {
+        "cmd"
+    } else {
+        "sh"
+    };
+    let shell_arg = if cfg!(target_os = "windows") {
+        "/C"
+    } else {
+        "-c"
+    };
+
+    let mut child = Command::new(shell)
+        .arg(shell_arg)
         .arg(command)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -297,10 +307,9 @@ impl Extension for ForeignExtension {
     }
 
     fn call(&self, mut ctx: Context) -> Option<String> {
-        
         let timeout = get_timeout(&ctx);
         let req = ActionRequest::from(self, &ctx);
-        
+
         let raw_response = send(&self.command, timeout, req)
             .map_err(|error| {
                 self.add_error(&error.to_string(), &mut ctx);
@@ -317,19 +326,25 @@ impl Extension for ForeignExtension {
                 Error::JsonParsingFailure
             })
             .ok()?;
-        
+
         ctx.document.top.push_str(&response.top);
         ctx.document.bottom.push_str(&response.bottom);
         response.imports.iter().for_each(|i| ctx.document.import(i));
-        response.errors.iter().for_each(|e| self.add_error(e, &mut ctx));
-        response.warnings.iter().for_each(|e| self.add_warning(e, &mut ctx));
+        response
+            .errors
+            .iter()
+            .for_each(|e| self.add_error(e, &mut ctx));
+        response
+            .warnings
+            .iter()
+            .for_each(|e| self.add_warning(e, &mut ctx));
 
         let mut content = String::new();
 
         for action in response.content {
             content.push_str(&match action {
                 Action::Raw(s) => s,
-            
+
                 Action::Extension {
                     name,
                     arguments,
