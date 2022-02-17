@@ -9,6 +9,7 @@ use std::process::{Command, Stdio};
 use std::rc::Rc;
 use std::time::Duration;
 use wait_timeout::ChildExt;
+use std::os::windows::process::CommandExt;
 use super::ExtensionVariant;
 
 #[derive(Clone)]
@@ -109,24 +110,26 @@ fn get_timeout(ctx: &Context) -> f32 {
 /// Given a request struct, send a message to a child process and await
 /// a response string
 fn send<T: Serialize>(command: &str, timeout: f32, req: T) -> Result<String, Error> {
-    let shell = if cfg!(target_os = "windows") {
-        "cmd"
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    let mut child = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .arg("/C")
+            .arg(command)
+            .creation_flags(CREATE_NO_WINDOW)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap()
     } else {
-        "sh"
-    };
-    let shell_arg = if cfg!(target_os = "windows") {
-        "/C"
-    } else {
-        "-c"
-    };
-
-    let mut child = Command::new(shell)
-        .arg(shell_arg)
+        Command::new("sh")
+        .arg("-c")
         .arg(command)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
-        .unwrap();
+        .unwrap()
+    };
+
 
     let contents = serde_json::to_string(&req).unwrap();
 
