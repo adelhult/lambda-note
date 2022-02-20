@@ -31,7 +31,7 @@ impl Extension for Maketitle {
         &self,
         mut ctx: Context,
     ) -> Option<String> {
-        if ctx.no_arguments() {
+        if !ctx.no_arguments() {
             self.add_warning("maketitle does not take any arguments", &mut ctx);
         }
 
