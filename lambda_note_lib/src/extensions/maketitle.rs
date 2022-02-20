@@ -12,11 +12,13 @@ impl Extension for Maketitle {
     fn description(&self) -> String {
         "Generate a titlepage \n\
         \n\
+        ```\n\
         Usage:\n\
-        |titlepage|\n\
+        |maketitle|\n\
+        ```\n\
         \n\
-        Interests:\n\
-        title, author and date.".to_string()
+        Requires the metadata fields\n\
+        `title`, `author` and `date`.".to_string()
     }
 
     fn version(&self) -> String {

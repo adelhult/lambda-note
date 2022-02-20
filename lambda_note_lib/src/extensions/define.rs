@@ -21,7 +21,14 @@ impl Extension for Define {
     }
 
     fn description(&self) -> String {
-        "Define a new extension".to_string()
+        "Define a new extension\n\
+        Usage:\n\
+        ```\n\
+        |define, name, shell command|\n\
+        ```\n\
+        Like this for example `|define, uppercase, python main.py|`.\n\n\
+        You can also specify the timeout (in seconds) by using the metadata\n\
+        field 'timeout'.".to_string()
     }
 
     fn version(&self) -> String {

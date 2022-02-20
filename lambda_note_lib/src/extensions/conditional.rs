@@ -33,13 +33,16 @@ impl Extension for Conditional {
         "Includes a block if conditions are met.\n\
         \n\
         Usage:\n\
+        ```\n\
         |conditional, You are not using HTML, file != html|\n\
+        ```\n\
         \n\
         or as a block...\n\
+        ```\n\
         ---- conditional, one of, os = mac, type = latex ----\n\
         you are probably not viewing this in Internet Explorer...\n\
-        ----"
-            .to_string()
+        ----\n\
+        ```".to_string()
     }
 
     fn version(&self) -> String {

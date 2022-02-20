@@ -9,7 +9,9 @@ impl Extension for Alias {
     }
 
     fn description(&self) -> String {
-        "Alias an extension to use another name. |alias, math, m|".to_string()
+        "Give an extension an alias. If you for example find it tedious\n\
+        to write 'math' everywhere in your document, you could alias it as 'm'\n\
+        \n```\n|alias, math, m|\n```".to_string()
     }
 
     fn version(&self) -> String {

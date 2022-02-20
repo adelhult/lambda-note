@@ -15,13 +15,15 @@ impl Extension for Img {
         "Add an image.\n\
         \n\
         Usage:\n\
+        ```\n\
         |img, filepath, [alt, width, label]|\n\
+        ```\n\
         \n\
         or as a block...\n\
+        ```\n\
         ---- img, filepath [width, label] ----\n\
         alt text\n\
-        ----"
-            .to_string()
+        ----\n```".to_string()
     }
 
     fn version(&self) -> String {

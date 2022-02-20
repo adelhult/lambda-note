@@ -18,7 +18,14 @@ impl Extension for Code {
     }
 
     fn description(&self) -> String {
-        "Format and syntax highlight code ".to_string()
+        "Format and syntax highlight code. Usage:\n\
+        ```\n
+        ---- code, [language] ----\n\
+        foo = bar\n\
+        ----\n\
+        \n\
+        |code, foo = bar, [language]|\n\
+        ```".to_string()
     }
 
     fn version(&self) -> String {

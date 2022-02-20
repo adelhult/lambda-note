@@ -12,8 +12,35 @@ impl Extension for Calc {
     }
 
     fn description(&self) -> String {
-        // TODO: write a desc.
-        String::from("Calc - calculation expressions")
+        "Evaluate arithmetic and logic expressions directly \n\
+        in your document as it gets rendered.\n\n\
+        Usage:\n\
+        ```\n\
+        ---- calc, [prefix, display]
+        a = 20;
+        a + 10
+        ---- 
+        ```\n\
+        Or inline `|calc, 2 * 3 * math::sin(2), [prefix, display]|`.\n\
+        **Prefix** is the text that simply will be prefixed before the output.\n\
+        The third argument **display** is only allowed to be the string 'display'.\n\
+        If it is included the entire expression will be outputed as a code block.\n\
+        \n\n\
+        Variables can be assigned values using the '=' operator. However,\n\
+        these variables are only local to expression they are defined in.\n\
+        If you want to have a global variable that you can use in multiple expressions,\n\
+        do so by defining a metadata field prefixed with 'calc_'. Example:\n\
+        ```\n\
+        :: calc_coolness factor = 10\n\
+        \n\
+        Alanzo is this cool: |calc, coolness_factor * 3|. While\n\
+        Alan has |calc, coolness_factor * 3.5| coolness points.\n\
+        ```\n\
+        **Note: variables defined as metadata fields are read only. If you reassign\n\
+        their values it will only change the value in that expression.**\n\n\
+        Calc uses the Rust library [evalexpr](https://github.com/ISibboI/evalexpr)\n\
+        and you can learn more about the syntax and the available functions.\n\
+        \n".to_string()
     }
 
     fn version(&self) -> String {

@@ -13,7 +13,7 @@ impl Extension for Math {
     }
 
     fn description(&self) -> String {
-        "Format equations and math".to_string()
+        "Format equations and math using LaTeX syntax.".to_string()
     }
 
     fn version(&self) -> String {

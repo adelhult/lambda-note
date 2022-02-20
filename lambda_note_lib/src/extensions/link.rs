@@ -15,16 +15,20 @@ impl Extension for Link {
         "Add a hyperlink.\n\
         \n\
         Usage:\n\
+        ```\n\
         |link, url, [label]|\n\
+        ```\n\
         ...or as a block:\n\
+        ```\n\
         ------- link, https://eli.nu --------\n\
         All this **text** and other ==content==\n
         is part of the link.\n
         -------------------------------------\n\
-        Note: If no label is provided, the url will just be displayed.\n\
-        Provide the metadata field linkcolor to choose the color of the link\n
-        for example, :: link_color = red, "
-            .to_string()
+        ```\n\
+        **Note**: If no label is provided, the url will just be displayed.\n\
+        \n\
+        Provide the metadata field `linkcolor` to choose the color of the link\n
+        for example: `:: link_color = red`".to_string()
     }
 
     fn version(&self) -> String {
