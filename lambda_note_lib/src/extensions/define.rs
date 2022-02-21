@@ -1,3 +1,4 @@
+use super::ExtensionVariant;
 use crate::extensions::{Context, Extension};
 use crate::translator::OutputFormat;
 use crate::Origin;
@@ -5,13 +6,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::io::{Read, Write};
-use std::process::{Command, Stdio};
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+use std::process::{Command, Stdio, Child};
 use std::rc::Rc;
 use std::time::Duration;
 use wait_timeout::ChildExt;
-use super::ExtensionVariant;
-#[cfg(target_os = "windows")]
-use std::os::windows::process::CommandExt;
 
 #[derive(Clone)]
 pub struct Define;
@@ -29,7 +29,8 @@ impl Extension for Define {
         ```\n\
         Like this for example `|define, uppercase, python main.py|`.\n\n\
         You can also specify the timeout (in seconds) by using the metadata\n\
-        field 'timeout'.".to_string()
+        field 'timeout'."
+            .to_string()
     }
 
     fn version(&self) -> String {
@@ -114,30 +115,38 @@ fn get_timeout(ctx: &Context) -> f32 {
         .flatten()
         .unwrap_or(2.0)
 }
+#[cfg(target_os = "windows")]
+fn spawn_windows(command_str: &str) -> Result<Child, Error> {
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    
+    Command::new("cmd")
+        .arg("/C")
+        .arg(command_str)
+        .creation_flags(CREATE_NO_WINDOW)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .map_err(|_| Error::ProcessFailure)
+}
+
+#[cfg(not(target_os = "window"))]
+fn spawn_non_windows(command_str: &str) -> Result<Child, Error> {
+    Command::new("sh")
+        .arg("-c")
+        .arg(command_str)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .map_err(|_| Error::ProcessFailure)
+}
 
 /// Given a request struct, send a message to a child process and await
 /// a response string
 fn send<T: Serialize>(command: &str, timeout: f32, req: T) -> Result<String, Error> {
-    const CREATE_NO_WINDOW: u32 = 0x08000000;
-    let mut child = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .arg("/C")
-            .arg(command)
-            .creation_flags(CREATE_NO_WINDOW)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .spawn()
-            .unwrap()
-    } else {
-        Command::new("sh")
-        .arg("-c")
-        .arg(command)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()
-        .unwrap()
-    };
-
+    #[cfg(target_os = "windows")]
+    let mut child = spawn_windows(command)?;
+    #[cfg(not(target_os = "windows"))]
+    let mut child = spawn_non_windows(command)?;
 
     let contents = serde_json::to_string(&req).unwrap();
 
