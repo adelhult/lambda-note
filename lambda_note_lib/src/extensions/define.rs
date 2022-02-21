@@ -9,8 +9,9 @@ use std::process::{Command, Stdio};
 use std::rc::Rc;
 use std::time::Duration;
 use wait_timeout::ChildExt;
-use std::os::windows::process::CommandExt;
 use super::ExtensionVariant;
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
 
 #[derive(Clone)]
 pub struct Define;
