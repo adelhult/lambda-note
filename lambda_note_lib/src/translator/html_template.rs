@@ -91,12 +91,22 @@ fn set_to_str(set: &HashSet<String>) -> String {
 
 const PREVIEW_MSG_LISTENER: &str = r#"
 <script>
-// listen for an event to reload the window
-window.addEventListener('message', event => {{ 
-        // Data sent with postMessage is stored in event.data:
-        console.log(event.data); 
-        if (event.data === "reload")
-            window.location.reload()
-}}); 
+// any references to local files will be broken due to
+// the browsers origin policy. To fix this, we host a server at
+// localhost:5432, and use the following code updates all href and src
+// tags in the page to point to the local server instead of directly to the local file.
+document.addEventListener("DOMContentLoaded", function () {
+    document.body.querySelectorAll('[href], [src]').forEach(node => {
+        if (typeof node.href !== 'undefined') {
+            if (node.href.startsWith('http')) return;
+            node.href = 'http://localhost:5432/' + node.href.replace("file:///", "");
+        }
+
+        if (typeof node.src !== 'undefined') {
+            if (node.src.startsWith('http')) return;
+            node.src = 'http://localhost:5432/' + node.src.replace("file:///", "");
+        }
+    });
+});
 </script>
 "#;
