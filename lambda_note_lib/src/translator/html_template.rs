@@ -109,4 +109,13 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
+<script>
+// listen for an event to reload the window
+window.addEventListener('message', event => { 
+        // Data sent with postMessage is stored in event.data:
+        console.log(event.data); 
+        if (event.data === "reload")
+            window.location.reload()
+}); 
+</script>
 "#;
