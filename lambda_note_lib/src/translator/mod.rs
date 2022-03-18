@@ -1,6 +1,7 @@
 mod html;
 mod latex;
 mod web_preview;
+mod html_template;
 
 use crate::extensions::{get_native_extensions, Context, Extension, ExtensionVariant};
 use crate::{parse_doc, Block, Inline, Origin, Tag};
@@ -10,6 +11,7 @@ use std::{
     rc::Rc,
 };
 
+pub use html_template::HtmlTemplate;
 pub use html::Html;
 pub use latex::Latex;
 pub use web_preview::WebPreview;
