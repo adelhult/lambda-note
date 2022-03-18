@@ -48,10 +48,11 @@ impl Translator for HtmlTemplate {
         // a regex to match something on the form {{foo}} or {{foo|default}}
         let re = Regex::new(r"\{\{\s?(\w+)\s?(?:\|(.*))?\}\}").unwrap();
 
-        // generate a string from the imports
-        let mut imports_str = set_to_str(imports);
+        // generate a string from the bottom of the doc and include the
+        // preview js scripts if need be
+        let mut bottom_string = String::from(bottom); 
         if self.preview {
-            imports_str.push_str(PREVIEW_MSG_LISTENER);
+            bottom_string.push_str(PREVIEW_MSG_LISTENER);
         }
 
         // replace all "template-tags"
@@ -60,8 +61,8 @@ impl Translator for HtmlTemplate {
                 .and_then(|m| match m.as_str() {
                     "top" => Some(top.to_string()),
                     "content" => Some(content.to_string()),
-                    "bottom" => Some(bottom.to_string()),
-                    "imports" =>Some(imports_str.clone()),
+                    "bottom" => Some(bottom_string.clone()),
+                    "imports" =>Some(set_to_str(imports)),
                     field => metadata.get(field).cloned(),
                 })
                 // falback to the specified default
